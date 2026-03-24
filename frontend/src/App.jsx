@@ -14,6 +14,9 @@ import AdminCoders from './pages/AdminCoders';
 import AdminSettings from './pages/AdminSettings';
 import { useAuthStore } from './store/useAuthStore';
 import { useEffect } from 'react';
+import CoderLayout from './components/CoderLayout';
+import CoderHistory from './pages/CoderHistory';
+import CoderAnalytics from './pages/CoderAnalytics';
 
 export default function App() {
    const { user } = useAuthStore();
@@ -66,8 +69,12 @@ export default function App() {
 
             {/* 🟢 Coder: Simple workspace with Top Navbar */}
             <Route element={<ProtectedRoute allowedRoles={['coder']} />}>
-              <Route path="/workspace" element={<CoderWorkspace />} />
-            </Route>
+  <Route element={<CoderLayout />}>
+    <Route path="/workspace" element={<CoderWorkspace />} />
+    <Route path="/workspace/history" element={<CoderHistory />} />
+    <Route path="/workspace/analytics" element={<CoderAnalytics/>} />
+  </Route>
+</Route>
 
             {/* Fallback */}
             <Route path="/unauthorized" element={<h1 className="text-center text-red-500 text-2xl mt-10">403 - Unauthorized</h1>} />

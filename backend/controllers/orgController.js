@@ -1,42 +1,41 @@
-import { s3Client } from '../config/s3Config.js';
 import Organization from '../models/Organization.js';
-import { PutObjectCommand } from "@aws-sdk/client-s3";
+import { bucket } from '../config/gcsConfig.js'; 
 
 export const updateBranding = async (req, res) => {
   try {
-    const { orgId } = req.user; // From Auth Middleware
-    const { primaryColor, name } = req.body;
+    const { orgId } = req.user;
+    const { primaryColor } = req.body;
     let logoUrl = req.body.logoUrl;
 
-    // 1. If a new file was uploaded via Multer
     if (req.file) {
-      const fileName = `logos/${orgId}-${Date.now()}-${req.file.originalname}`;
+      const fileKey = `logos/${orgId}-${Date.now()}-${req.file.originalname.replace(/\s+/g, '_')}`;
+      const blob = bucket.file(fileKey);
       
-      const uploadParams = {
-        Bucket: process.env.AWS_BUCKET_NAME,
-        Key: fileName,
-        Body: req.file.buffer,
-        ContentType: req.file.mimetype,
-      };
+      const blobStream = blob.createWriteStream({
+        resumable: false,
+        contentType: req.file.mimetype,
+      });
 
-      await s3Client.send(new PutObjectCommand(uploadParams));
-      logoUrl = `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${fileName}`;
+      await new Promise((resolve, reject) => {
+        blobStream.on('error', reject);
+        blobStream.on('finish', async () => {
+          // REMOVED blob.makePublic() to comply with GCP Uniform Access
+          logoUrl = `https://storage.googleapis.com/${process.env.GCS_BUCKET_NAME}/${fileKey}`;
+          resolve();
+        });
+        blobStream.end(req.file.buffer);
+      });
     }
 
-    // 2. Update Database
     const updatedOrg = await Organization.findByIdAndUpdate(
-      orgId,
-      { 
-        name, 
-        'settings.primaryColor': primaryColor,
-        logoUrl: logoUrl 
-      },
+      orgId, 
+      { 'settings.primaryColor': primaryColor, ...(logoUrl && { logoUrl }) }, 
       { new: true }
     );
 
     res.json({ message: "Branding updated successfully", updatedOrg });
   } catch (error) {
-    console.error(error);
+    console.error("updateBranding error:", error);
     res.status(500).json({ error: "Failed to update branding" });
   }
 };

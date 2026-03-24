@@ -6,6 +6,7 @@ import cookieParser from 'cookie-parser';
 import authRoutes from './routes/authRoutes.js';
 import userRoutes from './routes/userRoutes.js';
 import orgsRoutes from './routes/orgRoutes.js';
+import encounterRoutes from './routes/encounterRoutes.js';
 
 
 
@@ -24,6 +25,9 @@ app.use(cors({
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use("/api/orgs",orgsRoutes)
+app.use('/api/encounters', encounterRoutes);
+
+
 app.get("/health", (req, res) => { 
     res.send("health check")
 })
