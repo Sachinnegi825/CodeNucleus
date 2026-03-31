@@ -1,7 +1,6 @@
 import api from './api';
 
 export const encounterService = {
-  // 1. Upload a PDF
   uploadRecord: async (file) => {
     const formData = new FormData();
     formData.append('file', file);
@@ -11,15 +10,19 @@ export const encounterService = {
     return res.data;
   },
 
-  // 2. Get list of all records
   getEncounters: async () => {
     const res = await api.get('/encounters');
     return res.data;
   },
 
-  // 3. Get the temporary Google Cloud viewing link
   getSecureViewUrl: async (encounterId) => {
     const res = await api.get(`/encounters/${encounterId}/view`);
+    return res.data;
+  },
+
+  // 🔴 NEW: Trigger Google Cloud DLP Scrubbing
+  scrubRecord: async (encounterId) => {
+    const res = await api.post(`/encounters/${encounterId}/scrub`);
     return res.data;
   }
 };

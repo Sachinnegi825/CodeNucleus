@@ -4,20 +4,21 @@ const encounterSchema = new mongoose.Schema({
   organizationId: { type: mongoose.Schema.Types.ObjectId, ref: 'Organization', required: true },
   uploadedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   
-  // Status of the pipeline
   status: { 
     type: String, 
     enum:['pending', 'scrubbed', 'coded', 'reviewed', 'completed'], 
     default: 'pending' 
   },
   
-  // File Storage
-  fileName: String, // Original name (e.g., "patient_smith.pdf")
-  pdfS3Key: { type: String, required: true }, // The secret path in S3
+  fileName: String, 
+  pdfS3Key: { type: String, required: true }, 
   
-  // Placeholders for Weeks 3 & 4
-  phiMap: { type: Map, of: String }, // For the AI De-identification moat
-  aiResults: [{
+  // NEW: Text Storage for the AI Pipeline
+  rawText: { type: String },
+  scrubbedText: { type: String },
+  phiMap: { type: Map, of: String }, // Stores {"[PERSON_NAME_1]": "John Doe"}
+  
+  aiResults:[{
     code: String,
     description: String,
     type: { type: String, enum:['ICD-10-CM', 'CPT', 'HCPCS'] },

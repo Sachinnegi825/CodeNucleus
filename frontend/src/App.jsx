@@ -38,7 +38,7 @@ export default function App() {
     } else {
       document.title = "CodeNucleus | Enterprise AI";
       const link = document.querySelector("link[rel~='icon']");
-      if (link) link.href = "/vite.svg";
+      if (link) link.href = "/favicon.svg";
     }
   }, [user]);
 

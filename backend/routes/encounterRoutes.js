@@ -3,7 +3,7 @@ import multer from 'multer';
 import { protect } from '../middleware/authMiddleware.js';
 import { authorizeRoles } from '../middleware/roleMiddleware.js';
 import { logAction } from '../middleware/auditMiddleware.js';
-import { uploadRecord, getEncounters, viewRecord } from '../controllers/encounterController.js';
+import { uploadRecord, getEncounters, viewRecord, scrubRecord } from '../controllers/encounterController.js';
 
 const router = express.Router();
 
@@ -20,5 +20,7 @@ const upload = multer({
 router.post('/upload', protect, authorizeRoles('admin', 'coder'), logAction('UPLOAD_RECORD'), upload.single('file'), uploadRecord);
 router.get('/', protect, authorizeRoles('admin', 'coder'), logAction('VIEW_ENCOUNTER_LIST'), getEncounters);
 router.get('/:id/view', protect, authorizeRoles('admin', 'coder'), logAction('GENERATE_PRESIGNED_URL'), viewRecord);
+router.post('/:id/scrub', protect, authorizeRoles('admin', 'coder'), logAction('SCRUB_PHI'), scrubRecord);
+
 
 export default router;

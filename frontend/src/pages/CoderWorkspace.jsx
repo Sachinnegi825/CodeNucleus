@@ -1,82 +1,92 @@
 import { useState, useEffect } from 'react';
 import { useAuthStore } from '../store/useAuthStore';
 import { encounterService } from '../services/encounterService';
-import { UploadCloud, FileText, Loader2, FileCheck, ShieldAlert, Eye } from 'lucide-react';
+import { 
+  UploadCloud, FileText, Loader2, FileCheck, 
+  ShieldAlert, Eye, Lock, CheckCircle2 
+} from 'lucide-react';
 
 export default function CoderWorkspace() {
   const { user } = useAuthStore();
   const [encounters, setEncounters] = useState([]);
   const [uploading, setUploading] = useState(false);
   
-  // Viewer State
+  // Viewer & Scrubbing State
   const [selectedEncounter, setSelectedEncounter] = useState(null);
   const [securePdfUrl, setSecurePdfUrl] = useState(null);
   const[loadingPdf, setLoadingPdf] = useState(false);
+  const [isScrubbing, setIsScrubbing] = useState(false); // NEW
 
-  // Load records on mount
   const fetchRecords = async () => {
     try {
       const data = await encounterService.getEncounters();
       setEncounters(data);
-    } catch (err) {
-      console.error("Failed to fetch encounters");
-    }
+    } catch (err) { console.error("Failed to fetch encounters"); }
   };
 
   useEffect(() => { fetchRecords(); },[]);
 
-  // Handle PDF Upload
   const handleUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
-    if (file.type !== 'application/pdf') {
-      alert("Only PDF files are supported for medical records.");
-      return;
-    }
+    if (file.type !== 'application/pdf') return alert("Only PDF files allowed.");
 
     setUploading(true);
     try {
       await encounterService.uploadRecord(file);
-      await fetchRecords(); // Refresh the list
-      alert("Medical Record ingested securely.");
-    } catch (err) {
-      alert("Upload failed. Check console.");
-    } finally {
-      setUploading(false);
-    }
+      await fetchRecords();
+    } catch (err) { alert("Upload failed."); } 
+    finally { setUploading(false); }
   };
 
-  // Handle Viewing a Record (Generates the 10-minute link)
   const handleViewRecord = async (encounter) => {
     setSelectedEncounter(encounter);
     setLoadingPdf(true);
-    setSecurePdfUrl(null); // Clear previous
+    setSecurePdfUrl(null);
 
     try {
       const data = await encounterService.getSecureViewUrl(encounter._id);
       setSecurePdfUrl(data.secureUrl);
+    } catch (err) { alert("Failed to generate secure viewing link."); } 
+    finally { setLoadingPdf(false); }
+  };
+
+  // 🔴 NEW: Handle PHI Scrubbing
+  const handleScrub = async () => {
+    if (!selectedEncounter) return;
+    setIsScrubbing(true);
+    try {
+      const data = await encounterService.scrubRecord(selectedEncounter._id);
+      
+      // Update local state instantly so the UI reacts
+      const updatedEncounter = { 
+        ...selectedEncounter, 
+        status: data.status, 
+        scrubbedText: data.scrubbedText 
+      };
+      
+      setSelectedEncounter(updatedEncounter);
+      setEncounters(encounters.map(enc => enc._id === updatedEncounter._id ? updatedEncounter : enc));
+      
+      alert(`PHI Scrubbed! Google DLP locked ${data.phiMapCount} sensitive data points.`);
     } catch (err) {
-      alert("Failed to generate secure viewing link.");
+      alert("Scrubbing failed. Ensure the PDF has extractable text (not just an image).");
     } finally {
-      setLoadingPdf(false);
+      setIsScrubbing(false);
     }
   };
 
   return (
-    <div className="max-w-[1600px] mx-auto h-[calc(100vh-80px)] flex flex-col lg:flex-row gap-6 p-4 md:p-6">
+    <div className="w-full h-full min-h-[800px] flex flex-col lg:flex-row gap-6 animate-in fade-in duration-500">
       
-      {/* ========================================== */}
-      {/* LEFT PANEL: UPLOAD & RECORD LIST           */}
-      {/* ========================================== */}
+      {/* LEFT PANEL: UPLOAD & QUEUE */}
       <div className="w-full lg:w-1/3 flex flex-col gap-6">
-        
-        {/* Upload Dropzone */}
+        {/* Upload Zone */}
         <div className="bg-slate-800 border border-slate-700 rounded-2xl p-6 shadow-xl relative overflow-hidden flex-shrink-0">
           <div className="absolute top-0 left-0 w-full h-1 bg-brand"></div>
           <h2 className="text-white font-bold mb-4 flex items-center gap-2">
             <UploadCloud size={20} className="text-brand" /> Ingest Medical Record
           </h2>
-          
           <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-slate-700 border-dashed rounded-xl cursor-pointer bg-slate-900/50 hover:bg-slate-900 transition-colors group">
             {uploading ? (
                <div className="flex flex-col items-center gap-2 text-brand">
@@ -94,7 +104,7 @@ export default function CoderWorkspace() {
         </div>
 
         {/* Record List */}
-        <div className="bg-slate-800 border border-slate-700 rounded-2xl flex-1 shadow-xl flex flex-col overflow-hidden">
+        <div className="bg-slate-800 border border-slate-700 rounded-2xl flex-1 shadow-xl flex flex-col overflow-hidden min-h-[400px]">
           <div className="p-4 border-b border-slate-700 bg-slate-800/50 flex justify-between items-center">
              <h3 className="font-bold text-white text-sm uppercase tracking-widest">Encounter Queue</h3>
              <span className="bg-brand/20 text-brand text-xs px-2 py-1 rounded font-bold">{encounters.length} Files</span>
@@ -123,32 +133,26 @@ export default function CoderWorkspace() {
                    </div>
                 </div>
                 <div className="flex items-center gap-2">
-                   <span className="text-[10px] uppercase font-bold tracking-widest bg-amber-500/10 text-amber-500 px-2 py-1 rounded-full">
+                   {/* Dynamic Status Badge */}
+                   <span className={`text-[9px] uppercase font-bold tracking-widest px-2 py-1 rounded-full ${
+                     enc.status === 'scrubbed' ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20' : 
+                     enc.status === 'pending' ? 'bg-amber-500/10 text-amber-500 border border-amber-500/20' : 
+                     'bg-slate-700 text-slate-300'
+                   }`}>
                      {enc.status}
                    </span>
-                   <Eye size={16} className={`transition-opacity ${selectedEncounter?._id === enc._id ? 'text-brand opacity-100' : 'text-slate-600 opacity-0 group-hover:opacity-100'}`} />
                 </div>
               </div>
             ))}
-            
-            {encounters.length === 0 && (
-              <div className="flex flex-col items-center justify-center h-40 text-slate-500 text-sm italic">
-                No encounters found. Upload a PDF to begin.
-              </div>
-            )}
           </div>
         </div>
       </div>
 
-      {/* ========================================== */}
-      {/* RIGHT PANEL: PDF VIEWER & AI PLACEHOLDER   */}
-      {/* ========================================== */}
+      {/* RIGHT PANEL: VIEWER & ACTION PIPELINE */}
       <div className="w-full lg:w-2/3 flex flex-col gap-6">
         
-        {/* Document Viewer */}
-        <div className="bg-slate-800 border border-slate-700 rounded-2xl flex-1 shadow-xl flex flex-col overflow-hidden relative">
-           
-           {/* Top Action Bar */}
+        {/* PDF Viewer */}
+        <div className="bg-slate-800 border border-slate-700 rounded-2xl flex-1 shadow-xl flex flex-col overflow-hidden relative min-h-125">
            <div className="h-14 border-b border-slate-700 bg-slate-900 flex items-center justify-between px-6 flex-shrink-0">
               <div className="flex items-center gap-2">
                  <ShieldAlert size={16} className="text-emerald-500" />
@@ -161,7 +165,6 @@ export default function CoderWorkspace() {
               )}
            </div>
 
-           {/* PDF Display Area */}
            <div className="flex-1 bg-slate-950 relative">
               {!selectedEncounter ? (
                  <div className="absolute inset-0 flex flex-col items-center justify-center text-slate-600">
@@ -174,33 +177,63 @@ export default function CoderWorkspace() {
                     <p className="font-bold uppercase tracking-widest text-xs">Decrypting Document...</p>
                  </div>
               ) : securePdfUrl ? (
-                 <iframe 
-                   src={`${securePdfUrl}#toolbar=0`} 
-                   className="w-full h-full border-none"
-                   title="Medical Record"
-                 ></iframe>
+                 <iframe src={`${securePdfUrl}#toolbar=0`} className="w-full h-full border-none" title="Medical Record"></iframe>
               ) : (
-                 <div className="absolute inset-0 flex items-center justify-center text-red-500">
-                    Failed to load document.
-                 </div>
+                 <div className="absolute inset-0 flex items-center justify-center text-red-500">Failed to load document.</div>
               )}
            </div>
         </div>
         
-        {/* Bottom AI Action Bar (Placeholder for Week 4) */}
-        <div className="h-24 bg-slate-800 border border-slate-700 rounded-2xl flex items-center justify-between px-6 shadow-xl flex-shrink-0">
-           <div>
-             <h4 className="text-white font-bold flex items-center gap-2">
-               <div className="w-2 h-2 rounded-full bg-brand animate-pulse"></div>
-               AI Extraction Engine (Offline)
-             </h4>
-             <p className="text-xs text-slate-400 mt-1">Select a document to begin the coding process.</p>
-           </div>
-           <button disabled className="bg-slate-700 text-slate-500 px-8 py-3 rounded-xl font-bold uppercase tracking-widest text-xs cursor-not-allowed border border-slate-600">
-             Run AI Analysis
-           </button>
-        </div>
+        {/* 🔴 NEW: DYNAMIC ACTION PIPELINE */}
+        <div className="bg-slate-800 border border-slate-700 rounded-2xl p-6 shadow-xl flex-shrink-0 relative overflow-hidden transition-all duration-300">
+           
+           {!selectedEncounter ? (
+              /* State 0: No Selection */
+              <div className="flex flex-col items-center justify-center text-center opacity-50 py-2">
+                <h4 className="text-white font-bold text-slate-400">Action Pipeline Offline</h4>
+                <p className="text-xs text-slate-500 mt-1">Select a document from the queue to begin processing.</p>
+              </div>
+           ) : selectedEncounter.status === 'pending' ? (
+              /* State 1: Needs Scrubbing */
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                 <div className="absolute top-0 left-0 w-1 h-full bg-amber-500"></div>
+                 <div>
+                   <h4 className="text-white font-bold flex items-center gap-2">
+                     <Lock size={18} className="text-amber-500" />
+                     Step 1: De-Identify Medical Record
+                   </h4>
+                   <p className="text-xs text-slate-400 mt-1 max-w-md">
+                     Scan and redact Protected Health Information (PHI) using Google Cloud DLP before sending to AI.
+                   </p>
+                 </div>
+                 <button
+                   onClick={handleScrub}
+                   disabled={isScrubbing}
+                   className="w-full sm:w-auto cursor-pointer bg-amber-500 hover:bg-amber-600 text-slate-900 px-8 py-3 rounded-xl font-bold uppercase tracking-widest text-xs transition shadow-lg shadow-amber-500/20 flex items-center justify-center gap-2 disabled:opacity-50"
+                 >
+                   {isScrubbing ? <><Loader2 className="animate-spin" size={16} /> Scanning via GCP...</> : "Scrub PHI Data"}
+                 </button>
+              </div>
+           ) : (
+              /* State 2: Ready for AI (Week 4) */
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                 <div className="absolute top-0 left-0 w-1 h-full bg-brand"></div>
+                 <div>
+                   <h4 className="text-white font-bold flex items-center gap-2">
+                     <CheckCircle2 size={18} className="text-emerald-500" />
+                     Step 2: AI Coding Engine Ready
+                   </h4>
+                   <p className="text-xs text-slate-400 mt-1 max-w-md">
+                     PHI successfully redacted. Document is secure and ready for Gemini 1.5 Pro analysis.
+                   </p>
+                 </div>
+                 <button disabled className="w-full sm:w-auto bg-slate-700 text-slate-500 px-8 py-3 rounded-xl font-bold uppercase tracking-widest text-xs cursor-not-allowed border border-slate-600">
+                   Run AI Analysis (Week 4)
+                 </button>
+              </div>
+           )}
 
+        </div>
       </div>
     </div>
   );
