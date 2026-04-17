@@ -7,7 +7,11 @@ export const authService = {
   },
   
   logout: async () => {
-    // In Week 2, we will add a backend call here to clear the cookie
+    try {
+      await api.post('/auth/logout');
+    } catch (error) {
+      console.error("Logout error:", error);
+    }
     return true;
   }
 };

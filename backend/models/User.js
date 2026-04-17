@@ -3,8 +3,12 @@ import mongoose from 'mongoose';
 const userSchema = new mongoose.Schema({
   email: { type: String, required: true, unique: true },
   password: { type: String, required: true },
-// Change the role line to this:
-role: { type: String, enum:['superadmin', 'admin', 'coder', 'auditor'], default: 'coder' },
+role: { type: String, enum:['superadmin', 'admin', 'coder'], default: 'coder' },
+ status: { 
+    type: String, 
+    enum: ['active', 'suspended'], 
+    default: 'active' 
+  },
   organizationId: { type: mongoose.Schema.Types.ObjectId, ref: 'Organization' },
   refreshToken: String
 }, { timestamps: true });

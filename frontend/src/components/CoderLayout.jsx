@@ -2,14 +2,16 @@ import { useState } from 'react';
 import { Link, Outlet, useLocation } from 'react-router-dom';
 import { 
   Menu, X, ChevronRight, ShieldCheck, 
-  ActivitySquare, History, BarChart3
+  ActivitySquare, History, BarChart3,
+  PanelLeftClose, PanelLeftOpen
 } from 'lucide-react';
 import { useAuthStore } from '../store/useAuthStore';
 
 export default function CoderLayout() {
   const { user } = useAuthStore();
   const location = useLocation();
-  const[isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(false);
 
   const menuItems =[
     { name: 'Active Workspace', path: '/workspace', icon: ActivitySquare },
@@ -18,6 +20,7 @@ export default function CoderLayout() {
   ];
 
   const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
+  const toggleCollapse = () => setIsCollapsed(!isCollapsed);
 
   return (
     <div className="flex flex-1 min-h-0 relative">
@@ -39,19 +42,31 @@ export default function CoderLayout() {
 
       {/* Sidebar Navigation */}
       <aside className={`
-        fixed lg:static inset-y-0 left-0 z-40 w-64 bg-slate-950 border-r border-slate-800 
-        transform transition-transform duration-300 ease-in-out
+        fixed lg:static inset-y-0 left-0 z-40 bg-slate-950 border-r border-slate-800 
+        transform transition-all duration-300 ease-in-out
         ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
+        ${isCollapsed ? 'w-20' : 'w-64'}
       `}>
         <div className="flex flex-col h-full">
           {/* Header */}
-          <div className="p-6 border-b border-slate-800">
-            <p className="text-[10px] uppercase font-bold text-slate-500 tracking-widest mb-1">Assigned Role</p>
-            <h2 className="text-white font-bold text-lg">Medical Coder</h2>
+          <div className={`flex items-center border-b border-slate-800 relative transition-all duration-300 ${isCollapsed ? 'justify-center h-20 px-0' : 'p-6 h-24'}`}>
+            {!isCollapsed && (
+              <div className="flex flex-col">
+                <p className="text-[10px] uppercase font-bold text-slate-500 tracking-widest mb-1">Assigned Role</p>
+                <h2 className="text-white font-bold text-lg whitespace-nowrap overflow-hidden">Medical Coder</h2>
+              </div>
+            )}
+            <button 
+              onClick={toggleCollapse}
+              className={`hidden lg:flex absolute ${isCollapsed ? 'relative inset-auto' : 'top-8 right-4'} p-1.5 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors cursor-pointer`}
+              title={isCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
+            >
+              {isCollapsed ? <PanelLeftOpen size={18} /> : <PanelLeftClose size={18} />}
+            </button>
           </div>
 
           {/* Navigation Links */}
-          <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
+          <nav className="flex-1 p-4 space-y-2 overflow-y-auto overflow-x-hidden">
             {menuItems.map((item) => {
               const isActive = location.pathname === item.path;
               return (
@@ -59,34 +74,35 @@ export default function CoderLayout() {
                   key={item.path}
                   to={item.path}
                   onClick={() => setIsSidebarOpen(false)}
-                  className={`flex items-center justify-between px-4 py-3 rounded-xl transition-all group ${
+                  className={`flex items-center ${isCollapsed ? 'justify-center' : 'justify-between'} px-4 py-3 rounded-xl transition-all group ${
                     isActive 
                     ? 'bg-brand text-white shadow-lg shadow-brand/20' 
                     : 'text-slate-400 hover:bg-slate-900 hover:text-white'
                   }`}
+                  title={isCollapsed ? item.name : ""}
                 >
-                  <div className="flex items-center gap-3">
-                    <item.icon size={20} />
-                    <span className="font-medium text-sm">{item.name}</span>
+                  <div className="flex items-center gap-3 min-w-0">
+                    <item.icon size={20} className="flex-shrink-0" />
+                    {!isCollapsed && <span className="font-medium text-sm whitespace-nowrap overflow-hidden text-ellipsis">{item.name}</span>}
                   </div>
-                  {isActive && <ChevronRight size={14} />}
+                  {!isCollapsed && isActive && <ChevronRight size={14} className="flex-shrink-0" />}
                 </Link>
               );
             })}
           </nav>
 
           {/* Bottom Security Badge */}
-          <div className="p-4 border-t border-slate-800 bg-slate-900/30">
-             <div className="flex items-center gap-2 text-emerald-500 bg-emerald-500/10 p-3 rounded-xl border border-emerald-500/20">
+          <div className={`p-4 border-t border-slate-800 bg-slate-900/30 transition-all duration-300 ${isCollapsed ? 'flex justify-center px-0' : ''}`}>
+             <div className={`flex items-center gap-2 text-emerald-500 bg-emerald-500/10 p-3 rounded-xl border border-emerald-500/20 ${isCollapsed ? 'justify-center' : ''}`}>
                <ShieldCheck size={20} className="flex-shrink-0" />
-               <span className="text-[10px] font-bold uppercase tracking-tighter">AES-256 Encryption Active</span>
+               {!isCollapsed && <span className="text-[10px] font-bold uppercase tracking-tighter whitespace-nowrap overflow-hidden">AES-256 Encryption Active</span>}
              </div>
           </div>
         </div>
       </aside>
 
       {/* Main Content Area */}
-      <main className="flex-1 bg-slate-900 overflow-y-auto p-4 md:p-6">
+      <main className="flex-1 bg-slate-900 overflow-y-auto p-4 md:p-6 transition-all duration-300">
         <div className="max-w-[1600px] mx-auto h-full">
           <Outlet />
         </div>

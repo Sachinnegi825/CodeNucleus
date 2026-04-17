@@ -112,7 +112,7 @@ export default function AdminSettings() {
         </div>
         <div className="bg-slate-800 border border-slate-700 px-4 py-2 rounded-xl text-[10px] font-bold text-slate-500 uppercase tracking-widest flex items-center gap-2">
           <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
-          AWS S3: Connected
+          GCP: Connected
         </div>
       </div>
 

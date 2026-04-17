@@ -17,6 +17,10 @@ import { useEffect } from 'react';
 import CoderLayout from './components/CoderLayout';
 import CoderHistory from './pages/CoderHistory';
 import CoderAnalytics from './pages/CoderAnalytics';
+import AdminAuditLogs from './pages/AdminAuditLogs';
+import AdminPayerRules from './pages/AdminPayerRules';
+import { Toaster } from 'react-hot-toast';
+import AdminQA from './pages/AdminQA';
 
 export default function App() {
    const { user } = useAuthStore();
@@ -44,6 +48,8 @@ export default function App() {
 
   return (
     <Router>
+          <Toaster position="top-right" reverseOrder={false} />
+
       <div className="min-h-screen bg-slate-900 flex flex-col font-sans text-slate-200">
         <Navbar />
         
@@ -63,6 +69,9 @@ export default function App() {
                 {/* These are 'Children' of the AdminLayout */}
                 <Route path="/admin/dashboard" element={<AdminOverview />} />
                 <Route path="/admin/coders" element={<AdminCoders />} />
+                <Route path="/admin/qa" element={<AdminQA />} />
+                <Route path="/admin/logs" element={<AdminAuditLogs />} />
+<Route path="/admin/rules" element={<AdminPayerRules/>} />
                 <Route path="/admin/settings" element={<AdminSettings />} />
               </Route>
             </Route>

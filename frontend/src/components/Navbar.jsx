@@ -2,13 +2,15 @@ import { useState } from 'react';
 import { useAuthStore } from '../store/useAuthStore';
 import { useNavigate } from 'react-router-dom';
 import { Menu, X, LogOut } from 'lucide-react';
+import { authService } from '../services/authService';
 
 export default function Navbar() {
-  const { user, logout, branding } = useAuthStore(); // Fetch branding directly
+  const { user, logout, branding } = useAuthStore(); 
   const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    await authService.logout();
     logout();
     navigate('/login');
   };

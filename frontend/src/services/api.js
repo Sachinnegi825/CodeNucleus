@@ -5,12 +5,31 @@ const api = axios.create({
   withCredentials: true, // Crucial for JWT Cookies
 });
 
-// Centralized Error Handling
+// Response interceptor to handle token expiration
 api.interceptors.response.use(
   (response) => response,
-  (error) => {
+  async (error) => {
+    const originalRequest = error.config;
+
+    // If error is 401 and we haven't retried yet
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      originalRequest._retry = true;
+
+      try {
+        // Attempt to refresh the token
+        await axios.post(`${import.meta.env.VITE_API_URL}/auth/refresh`, {}, { withCredentials: true });
+        
+        // If refresh successful, retry the original request
+        return api(originalRequest);
+      } catch (refreshError) {
+        // If refresh fails, redirect to login or clear state
+        console.error("Refresh token expired or invalid");
+        window.location.href = '/login'; 
+        return Promise.reject(refreshError);
+      }
+    }
+
     const message = error.response?.data?.message || "Something went wrong";
-    console.error("API Error:", message);
     return Promise.reject(message);
   }
 );

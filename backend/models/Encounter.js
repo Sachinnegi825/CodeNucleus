@@ -17,7 +17,11 @@ const encounterSchema = new mongoose.Schema({
   rawText: { type: String },
   scrubbedText: { type: String },
   phiMap: { type: Map, of: String }, // Stores {"[PERSON_NAME_1]": "John Doe"}
-  
+  status: { 
+  type: String, 
+  enum:['pending', 'scrubbed', 'coded', 'pending_qa', 'returned', 'completed'], 
+  default: 'pending' 
+},
   aiResults:[{
     code: String,
     description: String,
