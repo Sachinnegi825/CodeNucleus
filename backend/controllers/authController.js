@@ -61,7 +61,10 @@ export const loginUser = async (req, res) => {
         organization: user.organizationId ? {
           name: user.organizationId.name,
           primaryColor: user.organizationId.settings?.primaryColor,
-          logoUrl: user.organizationId.logoUrl
+          logoUrl: user.organizationId.logoUrl,
+          fontFamily: user.organizationId.settings?.fontFamily,
+          subdomain: user.organizationId.subdomain,
+
         } : { name: "CodeNucleus | Enterprise AI", primaryColor: "#ef4444" , logoUrl: "" }
       }
     });

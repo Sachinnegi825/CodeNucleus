@@ -33,11 +33,12 @@ export const useAuthStore = create(
         
         if (userData.organization) {
           const org = userData.organization;
+          // API returns flattened properties (primaryColor) or nested (settings.primaryColor)
           const branding = {
             name: org.name,
             logoUrl: org.logoUrl,
-            primaryColor: org.settings?.primaryColor || '#3b82f6',
-            fontFamily: org.settings?.fontFamily || 'Inter'
+            primaryColor: org.primaryColor || org.settings?.primaryColor || '#3b82f6',
+            fontFamily: org.fontFamily || org.settings?.fontFamily || 'Inter'
           };
           set({ branding });
           document.documentElement.style.setProperty('--brand-color', branding.primaryColor);

@@ -48,10 +48,7 @@ export default function SuperAdminOverview() {
           </div>
         </div>
         <div className="flex gap-4">
-           <div className="px-5 py-2.5 bg-slate-800/50 border border-slate-700 rounded-2xl">
-              <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Master Node</p>
-              <p className="text-sm text-white font-mono">us-east-1.codenucleus</p>
-           </div>
+          
            <div className="px-5 py-2.5 bg-slate-800/50 border border-slate-700 rounded-2xl">
               <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">API Status</p>
               <p className="text-sm text-emerald-500 font-mono flex items-center gap-2">
@@ -136,7 +133,7 @@ export default function SuperAdminOverview() {
                   <Building2 size={16} className="text-red-500" /> Organization Metadata
                 </h3>
                 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
                   <div className="space-y-2">
                     <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Agency Legal Name</label>
                     <input 
@@ -154,6 +151,17 @@ export default function SuperAdminOverview() {
                         value={form.subdomain} onChange={e => setForm({...form, subdomain: e.target.value})} required
                       />
                       <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-mono font-bold text-slate-500 uppercase">.cn.com</span>
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Brand Accent</label>
+                    <div className="flex items-center gap-3 bg-slate-900 border border-slate-700 p-2.5 rounded-2xl h-[58px]">
+                      <input 
+                        type="color" 
+                        className="w-10 h-full bg-transparent border-none cursor-pointer rounded-lg"
+                        value={form.primaryColor} onChange={e => setForm({...form, primaryColor: e.target.value})}
+                      />
+                      <span className="text-xs font-mono text-slate-400 uppercase">{form.primaryColor}</span>
                     </div>
                   </div>
                 </div>

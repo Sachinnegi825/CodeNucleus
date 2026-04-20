@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
-import { useAuthStore } from '../store/useAuthStore';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { 
   Activity, 
   Lock, 
@@ -12,10 +11,12 @@ import {
   Zap,
   Globe,
   Eye,
-  EyeOff
+  EyeOff,
+  ArrowLeft
 } from 'lucide-react';
 import { authService } from '../services/authService';
 import { orgService } from '../services/orgService';
+import { useAuthStore } from '../store/useAuthStore';
 import toast from 'react-hot-toast';
 
 axios.defaults.withCredentials = true;
@@ -67,18 +68,18 @@ export default function Login() {
       
       toast.success(`Welcome back, ${data.user.email.split('@')[0]}`);
       
-      if (data.user.role === 'superadmin') navigate('/super-admin');
+      if (data.user.role === 'superadmin') navigate('/superadmin/dashboard');
       else if (data.user.role === 'admin') navigate('/admin/dashboard');
       else navigate('/workspace');
     } catch (error) {
-      toast.error(error.response?.data?.message || "Authentication failed.");
+      toast.error(error.message || "Authentication failed.");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-[calc(100vh-64px)] flex items-center justify-center p-6 relative overflow-hidden">
+    <div className="h-full overflow-y-auto flex items-center justify-center p-6 relative overflow-x-hidden scroll-smooth">
       {/* Background Decorative Elements */}
       <div className="absolute top-1/4 -left-20 w-96 h-96 bg-brand/10 rounded-full blur-[120px] animate-pulse"></div>
       <div className="absolute bottom-1/4 -right-20 w-96 h-96 bg-emerald-500/5 rounded-full blur-[120px] animate-pulse delay-700"></div>
@@ -92,8 +93,8 @@ export default function Login() {
           </div>
 
           <div className="relative z-10">
-            <div className="flex items-center gap-3 mb-10">
-              <div className="p-2.5 bg-brand/10 rounded-xl border border-brand/20">
+            <Link to="/" className="flex items-center gap-3 mb-10 group hover:opacity-80 transition-opacity">
+              <div className="p-2.5 bg-brand/10 rounded-xl border border-brand/20 group-hover:border-brand/40 transition-colors">
                 {/* 🔴 DYNAMIC LOGO */}
                 {branding.logoUrl ? (
                   <img src={branding.logoUrl} className="w-6 h-6 object-contain" alt="Logo" />
@@ -104,7 +105,7 @@ export default function Login() {
               <span className="text-xl font-bold text-white tracking-tighter">
                 {branding.name} {/* 🔴 DYNAMIC NAME */}
               </span>
-            </div>
+            </Link>
 
             <h1 className="text-4xl font-bold text-white leading-tight mb-6">
               Precision AI for <br />
@@ -142,7 +143,12 @@ export default function Login() {
 
         {/* RIGHT COLUMN: Login Form */}
         <div className="p-8 md:p-16 flex flex-col justify-center relative">
-          <div className="mb-10 text-center lg:text-left">
+          <Link to="/" className="absolute top-8 left-8 lg:left-16 flex items-center gap-2 text-slate-500 hover:text-white transition-colors text-xs font-bold uppercase tracking-widest group">
+            <ArrowLeft size={14} className="group-hover:-translate-x-1 transition-transform" />
+            Back to Website
+          </Link>
+
+          <div className="mb-10 text-center lg:text-left mt-8 lg:mt-0">
             <h2 className="text-3xl font-bold text-white tracking-tight mb-2">Secure Login</h2>
             <p className="text-slate-400 text-sm">Welcome to the {branding.name} gateway.</p>
           </div>
