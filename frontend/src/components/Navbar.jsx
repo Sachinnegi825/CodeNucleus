@@ -18,12 +18,18 @@ export default function Navbar() {
   if (!user) return null;
 
   return (
-    <nav className="bg-slate-950 border-b-2 border-brand text-white p-4 shadow-xl">
+    <nav className="h-[73px] bg-slate-950 border-b-2 border-brand text-white p-4 shadow-xl shrink-0 z-50">
       {/* Top Bar */}
-      <div className="flex justify-between items-center">
+      <div className="flex justify-between items-center h-full">
         
         {/* Logo / Brand Section */}
-        <div className="font-bold text-xl flex items-center gap-3 cursor-pointer" onClick={() => navigate('/')}>
+        <div 
+          role="button"
+          tabIndex={0}
+          className="font-bold text-xl flex items-center gap-3" 
+          onClick={() => navigate('/')}
+          onKeyDown={(e) => e.key === 'Enter' && navigate('/')}
+        >
           {branding.logoUrl ? (
             <img src={branding.logoUrl} alt="Logo" className="h-8 w-auto rounded shadow-sm" />
           ) : (

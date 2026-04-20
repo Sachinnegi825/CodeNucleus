@@ -19,10 +19,10 @@ export default function AdminAuditLogs() {
     setLoading(true);
     try {
       const data = await userService.getAuditLogs(page, 10);
-      setLogs(data.logs);
-      setTotalPages(data.totalPages);
-      setCurrentPage(data.currentPage);
-      setTotalResults(data.totalLogs);
+      setLogs(data?.logs || []);
+      setTotalPages(data?.totalPages || 1);
+      setCurrentPage(data?.currentPage || 1);
+      setTotalResults(data?.totalLogs || 0);
     } catch (err) {
       console.error("Logs fetch failed");
     } finally {
@@ -36,9 +36,10 @@ export default function AdminAuditLogs() {
 
   // Handle Action Styling
   const getActionStyle = (action) => {
-    if (action.includes('LOGIN')) return 'text-blue-400 bg-blue-500/10 border-blue-500/20';
-    if (action.includes('SCRUB')) return 'text-amber-400 bg-amber-500/10 border-amber-500/20';
-    if (action.includes('EXPORT')) return 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20';
+    const act = action || '';
+    if (act.includes('LOGIN')) return 'text-blue-400 bg-blue-500/10 border-blue-500/20';
+    if (act.includes('SCRUB')) return 'text-amber-400 bg-amber-500/10 border-amber-500/20';
+    if (act.includes('EXPORT')) return 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20';
     return 'text-slate-400 bg-slate-500/10 border-slate-500/20';
   };
 
@@ -50,7 +51,7 @@ export default function AdminAuditLogs() {
             <ShieldCheck className="text-brand" size={32} /> Compliance Audit Trail
           </h1>
           <p className="text-slate-400 mt-1">
-            Showing <span className="text-white font-bold">{logs.length}</span> of {totalResults} security events.
+            Showing <span className="text-white font-bold">{(logs || []).length}</span> of {totalResults || 0} security events.
           </p>
         </div>
       </div>
@@ -77,27 +78,27 @@ export default function AdminAuditLogs() {
                     </div>
                   </td>
                 </tr>
-              ) : logs.map((log) => (
-                <tr key={log._id} className="hover:bg-slate-700/10 transition-colors group">
+              ) : (logs || []).map((log) => (
+                <tr key={log?._id} className="hover:bg-slate-700/10 transition-colors group">
                   <td className="px-6 py-4 whitespace-nowrap font-mono text-[11px] text-slate-400">
-                    {new Date(log.timestamp).toLocaleString()}
+                    {log?.timestamp ? new Date(log.timestamp).toLocaleString() : 'N/A'}
                   </td>
                   <td className="px-6 py-4">
                     <div className="flex flex-col">
-                      <span className="text-sm font-medium text-slate-200">{log.userId?.email || 'System'}</span>
-                      <span className="text-[9px] text-slate-500 uppercase tracking-widest">{log.userId?.role}</span>
+                      <span className="text-sm font-medium text-slate-200">{log?.userId?.email || 'System'}</span>
+                      <span className="text-[9px] text-slate-500 uppercase tracking-widest">{log?.userId?.role || 'SYSTEM'}</span>
                     </div>
                   </td>
                   <td className="px-6 py-4">
-                    <span className={`px-2 py-1 rounded border text-[10px] font-bold uppercase tracking-tighter ${getActionStyle(log.action)}`}>
-                      {log.action.replace(/_/g, ' ')}
+                    <span className={`px-2 py-1 rounded border text-[10px] font-bold uppercase tracking-tighter ${getActionStyle(log?.action)}`}>
+                      {(log?.action || 'UNKNOWN_ACTION').replace(/_/g, ' ')}
                     </span>
                   </td>
                   <td className="px-6 py-4 font-mono text-[10px] text-slate-500">
-                    {log._id.substring(0, 12)}
+                    {(log?._id || '').substring(0, 12)}
                   </td>
                   <td className="px-6 py-4 text-xs text-slate-500 font-mono">
-                    {log.ipAddress || 'Internal'}
+                    {log?.ipAddress || 'Internal'}
                   </td>
                 </tr>
               ))}
@@ -108,7 +109,7 @@ export default function AdminAuditLogs() {
         {/* --- PAGINATION CONTROLS --- */}
         <div className="p-4 bg-slate-900/50 border-t border-slate-700 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="text-xs text-slate-500 font-medium">
-            Page <span className="text-white">{currentPage}</span> of {totalPages}
+            Page <span className="text-white">{currentPage || 1}</span> of {totalPages || 1}
           </div>
           
           <div className="flex items-center gap-2">
@@ -122,7 +123,7 @@ export default function AdminAuditLogs() {
 
             {/* Simple Page Numbers */}
             <div className="flex gap-1">
-              {[...Array(totalPages)].map((_, i) => {
+              {[...Array(totalPages || 1)].map((_, i) => {
                 const pageNum = i + 1;
                 // Only show current, first, last, and neighbors (simplified logic)
                 if (totalPages > 5 && (pageNum > 2 && pageNum < totalPages - 1 && Math.abs(pageNum - currentPage) > 1)) {

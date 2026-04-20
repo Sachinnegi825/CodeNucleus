@@ -1,10 +1,29 @@
 @import "tailwindcss";
 
 @theme {
-  --color-brand: var(--brand-color, #3b82f6); /* Default Blue, pops well on dark */
+  --color-brand: var(--brand-color, #3b82f6); 
+  --font-brand: var(--brand-font, 'Inter', sans-serif);
 }
 
 body {
-  background-color: #0f172a; /* Tailwind slate-900 */
-  color: #f8fafc; /* Tailwind slate-50 */
+  background-color: #0f172a; 
+  color: #f8fafc; 
+  font-family: var(--font-brand);
+}
+
+button, 
+[role="button"],
+a,
+input[type="submit"],
+input[type="button"],
+input[type="checkbox"],
+input[type="radio"],
+select {
+  cursor: pointer;
+}
+
+button:disabled, 
+[role="button"]:disabled,
+input:disabled {
+  cursor: not-allowed;
 }

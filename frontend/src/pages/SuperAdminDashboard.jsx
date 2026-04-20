@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { userService } from '../services/userService';
 import { ShieldAlert, Globe, Palette, UserCircle } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 export default function SuperAdminDashboard() {
   const [form, setForm] = useState({
@@ -13,16 +14,16 @@ export default function SuperAdminDashboard() {
     setLoading(true);
     try {
       await userService.createAgency(form);
-      alert(`Agency ${form.orgName} Deployed Successfully!`);
+      toast.success(`Agency ${form.orgName} Deployed Successfully!`);
       setForm({ orgName: '', subdomain: '', primaryColor: '#3b82f6', adminEmail: '', adminPassword: '' });
     } catch (err) {
-      alert(err);
+      toast.error(err.message || "Deployment failed");
     } finally { setLoading(false); }
   };
 
   return (
     <div className="max-w-5xl mx-auto space-y-8 animate-in zoom-in-95 duration-500">
-      <div className="flex items-center gap-4 border-b border-slate-800 pb-6">
+      <div className="flex items-center gap-4 mt-5 border-b border-slate-800 pb-6">
         <div className="p-3 bg-red-500/10 rounded-2xl border border-red-500/20">
           <ShieldAlert className="text-red-500" size={32} />
         </div>
@@ -49,18 +50,10 @@ export default function SuperAdminDashboard() {
               className="w-full bg-slate-900 border border-slate-700 p-3 rounded-xl text-white focus:ring-1 focus:ring-brand"
               value={form.subdomain} onChange={e => setForm({...form, subdomain: e.target.value})} required
             />
-            <div className="flex items-center gap-4 bg-slate-900 p-3 rounded-xl border border-slate-700">
-               <Palette size={20} className="text-slate-500" />
-               <input type="color" className="bg-transparent border-none w-10 h-10 cursor-pointer" 
-                 value={form.primaryColor} onChange={e => setForm({...form, primaryColor: e.target.value})} />
-               <span className="text-slate-400 font-mono text-sm uppercase">{form.primaryColor}</span>
-            </div>
+            
           </div>
-        </div>
 
-        {/* Admin Config */}
-        <div className="bg-slate-800 border border-slate-700 p-8 rounded-3xl shadow-2xl space-y-6">
-          <h2 className="flex items-center gap-2 text-white font-bold uppercase text-xs tracking-[0.2em] mb-4">
+ <h2 className="flex items-center gap-2 text-white font-bold uppercase text-xs tracking-[0.2em] mb-4">
             <UserCircle size={16} className="text-brand" /> Master Admin Credentials
           </h2>
           <div className="space-y-4">
@@ -82,6 +75,8 @@ export default function SuperAdminDashboard() {
             </button>
           </div>
         </div>
+
+       
       </form>
     </div>
   );

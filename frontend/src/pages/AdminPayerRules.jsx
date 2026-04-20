@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { payerRuleService } from '../services/payerRuleService';
 import { BookOpen, Plus, Trash2, ChevronLeft, ChevronRight, Loader2, ShieldAlert } from 'lucide-react';
 import AddRuleModal from '../components/modals/AddRuleModal';
+import ConfirmModal from '../components/modals/ConfirmModal';
+import toast from 'react-hot-toast';
 
 export default function AdminPayerRules() {
   const [rules, setRules] = useState([]);
@@ -11,22 +13,41 @@ export default function AdminPayerRules() {
   const [totalPages, setTotalPages] = useState(1);
   const [totalResults, setTotalResults] = useState(0);
 
+  // Confirmation Modal State
+  const [confirmState, setConfirmState] = useState({
+    isOpen: false,
+    ruleId: null,
+    loading: false
+  });
+
   const fetchRules = async (page) => {
     setLoading(true);
     try {
       const data = await payerRuleService.getRules(page, 10);
-      setRules(data?.rules);
-      setTotalPages(data?.totalPages);
-      setTotalResults(data?.totalRules);
+      setRules(data?.rules || []);
+      setTotalPages(data?.totalPages || 1);
+      setTotalResults(data?.totalRules || 0);
     } finally { setLoading(false); }
   };
 
   useEffect(() => { fetchRules(currentPage); }, [currentPage]);
 
-  const handleDelete = async (id) => {
-    if (!confirm("Remove this billing rule?")) return;
-    await payerRuleService.deleteRule(id);
-    fetchRules(currentPage);
+  const handleDelete = async () => {
+    if (!confirmState.ruleId) return;
+    setConfirmState(prev => ({ ...prev, loading: true }));
+    try {
+      await payerRuleService.deleteRule(confirmState.ruleId);
+      toast.success("Billing rule removed");
+      fetchRules(currentPage);
+    } catch (err) {
+      toast.error("Failed to delete rule");
+    } finally {
+      setConfirmState({ isOpen: false, ruleId: null, loading: false });
+    }
+  };
+
+  const openDeleteConfirm = (id) => {
+    setConfirmState({ isOpen: true, ruleId: id, loading: false });
   };
 
   return (
@@ -36,7 +57,7 @@ export default function AdminPayerRules() {
           <h1 className="text-3xl font-bold text-white flex items-center gap-3">
             <BookOpen className="text-brand" size={32} /> Denial Intelligence
           </h1>
-          <p className="text-slate-400 mt-1">Manage <span className="text-white font-bold">{totalResults}</span> automated billing triggers.</p>
+          <p className="text-slate-400 mt-1">Manage <span className="text-white font-bold">{totalResults || 0}</span> automated billing triggers.</p>
         </div>
         <button onClick={() => setIsModalOpen(true)} className="bg-brand text-white px-5 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2 hover:scale-105 transition shadow-lg shadow-brand/20 active:scale-95 cursor-pointer">
           <Plus size={18} /> Add New Rule
@@ -57,14 +78,14 @@ export default function AdminPayerRules() {
             <tbody className="divide-y divide-slate-700/50">
               {loading ? (
                 <tr><td colSpan="4" className="py-20 text-center"><Loader2 className="animate-spin text-brand mx-auto" /></td></tr>
-              ) : rules.length > 0 ? (
-                rules.map((rule) => (
+              ) : (rules || []).length > 0 ? (
+                (rules || []).map((rule) => (
                   <tr key={rule?._id} className="hover:bg-slate-700/10 transition-colors group">
-                    <td className="px-6 py-4 font-bold text-white text-sm">{rule?.payerName}</td>
-                    <td className="px-6 py-4 font-mono text-brand text-sm font-bold">{rule?.ruleCode}</td>
-                    <td className="px-6 py-4 text-slate-400 text-xs truncate max-w-xs">{rule?.requirement}</td>
+                    <td className="px-6 py-4 font-bold text-white text-sm">{rule?.payerName || 'Unknown Payer'}</td>
+                    <td className="px-6 py-4 font-mono text-brand text-sm font-bold">{rule?.ruleCode || 'N/A'}</td>
+                    <td className="px-6 py-4 text-slate-400 text-xs truncate max-w-xs">{rule?.requirement || 'No requirement details'}</td>
                     <td className="px-6 py-4 text-right">
-                      <button onClick={() => handleDelete(rule?._id)} className="text-slate-600 hover:text-red-500 transition p-2 cursor-pointer">
+                      <button onClick={() => openDeleteConfirm(rule?._id)} className="text-slate-600 hover:text-red-500 transition p-2 cursor-pointer">
                         <Trash2 size={16} />
                       </button>
                     </td>
@@ -87,19 +108,34 @@ export default function AdminPayerRules() {
 
         {/* PAGINATION */}
         <div className="p-4 bg-slate-900/50 border-t border-slate-700 flex items-center justify-between">
-           <span className="text-xs text-slate-500 font-medium">Page {currentPage} of {totalPages}</span>
+           <span className="text-xs text-slate-500 font-medium">Page {currentPage || 1} of {totalPages || 1}</span>
            <div className="flex items-center gap-2">
               <button onClick={() => setCurrentPage(p => Math.max(p - 1, 1))} disabled={currentPage === 1 || loading} className="p-2 rounded-lg bg-slate-800 border border-slate-700 text-slate-400 hover:text-white disabled:opacity-30 cursor-pointer">
                 <ChevronLeft size={18} />
               </button>
-              <button onClick={() => setCurrentPage(p => Math.min(p + 1, totalPages))} disabled={currentPage === totalPages || loading} className="p-2 rounded-lg bg-slate-800 border border-slate-700 text-slate-400 hover:text-white disabled:opacity-30 cursor-pointer">
+              <button onClick={() => setCurrentPage(p => Math.min(p + 1, totalPages))} disabled={(currentPage || 1) >= (totalPages || 1) || loading} className="p-2 rounded-lg bg-slate-800 border border-slate-700 text-slate-400 hover:text-white disabled:opacity-30 cursor-pointer">
                 <ChevronRight size={18} />
               </button>
            </div>
         </div>
       </div>
 
-      <AddRuleModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onRefresh={() => fetchRules(1)} createRuleFn={payerRuleService.createRule} />
+      <AddRuleModal 
+        isOpen={isModalOpen} 
+        onClose={() => setIsModalOpen(false)} 
+        onRefresh={() => fetchRules(1)} 
+        createRuleFn={payerRuleService.createRule} 
+      />
+
+      <ConfirmModal
+        isOpen={confirmState.isOpen}
+        loading={confirmState.loading}
+        title="Remove Billing Rule?"
+        message="This will immediately delete this denial intelligence rule from the system."
+        confirmText="Remove Rule"
+        onClose={() => setConfirmState({ isOpen: false, ruleId: null, loading: false })}
+        onConfirm={handleDelete}
+      />
     </div>
   );
 }

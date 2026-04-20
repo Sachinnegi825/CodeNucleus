@@ -1,22 +1,24 @@
 import { useState } from 'react';
 import { Link, Outlet, useLocation } from 'react-router-dom';
 import { 
-  Menu, X, ChevronRight, ShieldCheck, 
-  ActivitySquare, History, BarChart3,
-  PanelLeftClose, PanelLeftOpen
+  LayoutDashboard, 
+  Building2, 
+  Menu, 
+  X, 
+  ChevronRight, 
+  ShieldAlert,
+  PanelLeftClose,
+  PanelLeftOpen,
 } from 'lucide-react';
-import { useAuthStore } from '../store/useAuthStore';
 
-export default function CoderLayout() {
-  const { user } = useAuthStore();
+export default function SuperAdminLayout() {
   const location = useLocation();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
 
-  const menuItems =[
-    { name: 'Active Workspace', path: '/workspace', icon: ActivitySquare },
-    { name: 'Completed Claims', path: '/workspace/history', icon: History },
-    { name: 'My Performance', path: '/workspace/analytics', icon: BarChart3 },
+  const menuItems = [
+    { name: 'Main Dashboard', path: '/superadmin/dashboard', icon: LayoutDashboard },
+    { name: 'Manage Organizations', path: '/superadmin/organizations', icon: Building2 },
   ];
 
   const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
@@ -24,15 +26,14 @@ export default function CoderLayout() {
 
   return (
     <div className="flex flex-1 h-full overflow-hidden relative">
-      {/* Mobile Hamburger Button */}
       <button 
         onClick={toggleSidebar}
-        className="lg:hidden fixed bottom-6 right-6 z-50 p-4 bg-brand text-white rounded-full shadow-2xl hover:scale-110 transition-transform active:scale-95"
+        className="lg:hidden cursor-pointer fixed bottom-6 right-6 z-50 p-4 bg-red-600 text-white rounded-full shadow-2xl hover:scale-110 transition-transform active:scale-95"
       >
         {isSidebarOpen ? <X size={24} /> : <Menu size={24} />}
       </button>
 
-      {/* Sidebar Overlay (Mobile) */}
+      {/* Sidebar Overlay (Mobile only) */}
       {isSidebarOpen && (
         <div 
           className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-40 lg:hidden"
@@ -48,12 +49,12 @@ export default function CoderLayout() {
         ${isCollapsed ? 'w-20' : 'w-64'}
       `}>
         <div className="flex flex-col h-full overflow-hidden">
-          {/* Header */}
+          {/* Internal Sidebar Header */}
           <div className={`flex items-center border-b border-slate-800 relative shrink-0 transition-all duration-300 ${isCollapsed ? 'justify-center h-20 px-0' : 'p-6 h-24'}`}>
             {!isCollapsed && (
               <div className="flex flex-col">
-                <p className="text-[10px] uppercase font-bold text-slate-500 tracking-widest mb-1">Assigned Role</p>
-                <h2 className="text-white font-bold text-lg whitespace-nowrap overflow-hidden">Medical Coder</h2>
+                <p className="text-[10px] uppercase font-bold text-red-500 tracking-widest mb-1">Global Access</p>
+                <h2 className="text-white font-bold text-lg whitespace-nowrap overflow-hidden">SuperAdmin</h2>
               </div>
             )}
             <button 
@@ -66,7 +67,7 @@ export default function CoderLayout() {
           </div>
 
           {/* Navigation Links */}
-          <nav className="flex-1 p-4 space-y-2 overflow-y-auto overflow-x-hidden">
+          <nav className="flex-1 p-4 space-y-2 overflow-y-auto overflow-x-hidden custom-scrollbar">
             {menuItems.map((item) => {
               const isActive = location.pathname === item.path;
               return (
@@ -76,7 +77,7 @@ export default function CoderLayout() {
                   onClick={() => setIsSidebarOpen(false)}
                   className={`flex items-center ${isCollapsed ? 'justify-center' : 'justify-between'} px-4 py-3 rounded-xl transition-all group ${
                     isActive 
-                    ? 'bg-brand text-white shadow-lg shadow-brand/20' 
+                    ? 'bg-red-600 text-white shadow-lg shadow-red-600/20' 
                     : 'text-slate-400 hover:bg-slate-900 hover:text-white'
                   }`}
                   title={isCollapsed ? item.name : ""}
@@ -93,17 +94,17 @@ export default function CoderLayout() {
 
           {/* Bottom Security Badge */}
           <div className={`p-4 border-t border-slate-800 bg-slate-900/30 shrink-0 transition-all duration-300 ${isCollapsed ? 'flex justify-center px-0' : ''}`}>
-             <div className={`flex items-center gap-2 text-emerald-500 bg-emerald-500/10 p-3 rounded-xl border border-emerald-500/20 ${isCollapsed ? 'justify-center' : ''}`}>
-               <ShieldCheck size={20} className="flex-shrink-0" />
-               {!isCollapsed && <span className="text-[10px] font-bold uppercase tracking-tighter whitespace-nowrap overflow-hidden">AES-256 Encryption Active</span>}
-             </div>
+            <div className={`flex items-center gap-2 text-slate-500 ${isCollapsed ? 'justify-center' : ''}`}>
+              <ShieldAlert size={16} className="text-red-500 flex-shrink-0" />
+              {!isCollapsed && <span className="text-[10px] font-bold uppercase tracking-tighter whitespace-nowrap overflow-hidden">Root Authority Mode</span>}
+            </div>
           </div>
         </div>
       </aside>
 
       {/* Main Content Area */}
-      <main className="flex-1 bg-slate-900 overflow-y-auto p-4 md:p-6 transition-all duration-300 h-full scroll-smooth">
-        <div className="max-w-[1600px] mx-auto h-full">
+      <main className="flex-1 bg-slate-900 overflow-y-auto p-4 md:p-8 lg:p-10 transition-all duration-300 h-full scroll-smooth">
+        <div className="max-w-6xl mx-auto">
           <Outlet />
         </div>
       </main>

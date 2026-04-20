@@ -1,28 +1,26 @@
 import { useEffect, useState } from 'react';
 import { userService } from '../services/userService';
 import { 
-  Users, UserPlus, ShieldCheck, ChevronLeft, 
+  Building2, ChevronLeft, 
   ChevronRight, UserX, UserCheck, Loader2, KeyRound, Search, X 
 } from 'lucide-react';
-import AddCoderModal from '../components/modals/AddCoderModal';
 import ConfirmModal from '../components/modals/ConfirmModal';
-import UpdatePasswordModal from '../components/modals/UpdatePasswordModal'; // 🔵 NEW
+import UpdatePasswordModal from '../components/modals/UpdatePasswordModal';
 import toast from 'react-hot-toast';
 
-export default function AdminCoders() {
-  const [coders, setCoders] = useState([]);
+export default function SuperAdminOrganizations() {
+  const [agencies, setAgencies] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   
   // Password Reset Modal State
   const [isPassModalOpen, setIsPassModalOpen] = useState(false);
-  const [selectedCoder, setSelectedCoder] = useState(null);
+  const [selectedAdmin, setSelectedAdmin] = useState(null);
   
   // Confirmation Modal State
   const [confirmState, setConfirmState] = useState({
     isOpen: false,
-    targetCoder: null,
+    targetAdmin: null,
     loading: false
   });
 
@@ -31,50 +29,50 @@ export default function AdminCoders() {
   const [totalPages, setTotalPages] = useState(1);
   const [totalResults, setTotalResults] = useState(0);
 
-  const fetchCoders = async (page) => {
+  const fetchAgencies = async (page) => {
     setLoading(true);
     try {
-      const data = await userService.getCoders(page, 10);
-      setCoders(data?.coders || []);
+      const data = await userService.getAgencies(page, 10);
+      setAgencies(data?.agencies || []);
       setTotalPages(data?.totalPages || 1);
-      setTotalResults(data?.totalCoders || 0);
+      setTotalResults(data?.totalAgencies || 0);
     } catch (err) {
-      toast.error("Failed to sync employee records");
+      toast.error("Failed to sync agency records");
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchCoders(currentPage);
+    fetchAgencies(currentPage);
   }, [currentPage]);
 
-  const promptToggleStatus = (coder) => {
+  const promptToggleStatus = (admin) => {
     setConfirmState({
       isOpen: true,
-      targetCoder: coder,
+      targetAdmin: admin,
       loading: false
     });
   };
 
   const handleToggleStatus = async () => {
-    const coder = confirmState.targetCoder;
-    const action = coder?.status === 'active' ? 'Suspend' : 'Activate';
+    const admin = confirmState.targetAdmin;
+    const action = admin?.status === 'active' ? 'Suspend' : 'Activate';
     
     setConfirmState(prev => ({ ...prev, loading: true }));
 
-    const statusPromise = userService.toggleStatus(coder?._id);
+    const statusPromise = userService.toggleStatus(admin?._id);
 
     toast.promise(statusPromise, {
       loading: `Processing ${action}...`,
-      success: (data) => `Account ${coder?.email || 'Unknown'} is now ${data?.status || 'updated'}`,
-      error: `Could not update account status`,
+      success: (data) => `Agency Admin ${admin?.email || 'Unknown'} is now ${data?.status || 'updated'}`,
+      error: `Could not update agency status`,
     });
 
     try {
       await statusPromise;
-      setConfirmState({ isOpen: false, targetCoder: null, loading: false });
-      fetchCoders(currentPage);
+      setConfirmState({ isOpen: false, targetAdmin: null, loading: false });
+      fetchAgencies(currentPage);
     } catch (err) {
       setConfirmState(prev => ({ ...prev, loading: false }));
       console.error(err);
@@ -88,26 +86,20 @@ export default function AdminCoders() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold text-white flex items-center gap-3">
-            <Users className="text-brand" size={32} /> Coder Management
+            <Building2 className="text-red-500" size={32} /> Organization Management
           </h1>
           <p className="text-slate-400 mt-1">
-            Access control for <span className="text-white font-bold">{totalResults || 0}</span> organization identities.
+            Access control for <span className="text-white font-bold">{totalResults || 0}</span> enterprise identities.
           </p>
         </div>
-        <button 
-          onClick={() => setIsAddModalOpen(true)}
-          className="bg-brand text-white px-5 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2 hover:scale-105 transition shadow-lg shadow-brand/20 active:scale-95 cursor-pointer"
-        >
-          <UserPlus size={18} /> Provision New Coder
-        </button>
       </div>
 
       {/* SEARCH BOX */}
       <div className="relative w-full max-w-md">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={16} />
           <input 
-            type="text" placeholder="Search by email..."
-            className="bg-slate-800 border border-slate-700 text-sm rounded-xl pl-10 pr-4 py-2.5 text-white w-full focus:ring-1 focus:ring-brand outline-none"
+            type="text" placeholder="Search by email or organization..."
+            className="bg-slate-800 border border-slate-700 text-sm rounded-xl pl-10 pr-4 py-2.5 text-white w-full focus:ring-1 focus:ring-red-500 outline-none"
             value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)}
           />
           {searchTerm && (
@@ -126,10 +118,10 @@ export default function AdminCoders() {
           <table className="w-full text-left border-collapse">
             <thead className="bg-slate-900/80 text-slate-500 text-[10px] uppercase tracking-[0.2em] font-bold">
               <tr>
-                <th className="px-6 py-4">Employee Identity</th>
+                <th className="px-6 py-4">Organization & Admin</th>
+                <th className="px-6 py-4">Subdomain</th>
                 <th className="px-6 py-4">Status</th>
-                <th className="px-6 py-4">Onboarded</th>
-                <th className="px-6 py-4 text-right">Access Control</th>
+                <th className="px-6 py-4 text-right">Global Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-700/50">
@@ -137,67 +129,70 @@ export default function AdminCoders() {
                 <tr>
                   <td colSpan="4" className="py-20 text-center">
                     <div className="flex justify-center items-center gap-3 text-slate-500 font-mono text-xs italic">
-                      <Loader2 className="animate-spin text-brand" size={16} />
-                      Syncing Staff Directory...
+                      <Loader2 className="animate-spin text-red-500" size={16} />
+                      Fetching Global Directory...
                     </div>
                   </td>
                 </tr>
-              ) : (coders || []).filter(c => c?.email?.toLowerCase()?.includes(searchTerm?.toLowerCase())).length > 0 ? (
-                (coders || []).filter(c => c?.email?.toLowerCase()?.includes(searchTerm?.toLowerCase())).map((coder) => (
+              ) : agencies.length > 0 ? (
+                agencies.filter(a => 
+                  a?.email?.toLowerCase()?.includes(searchTerm?.toLowerCase()) || 
+                  a?.organizationId?.name?.toLowerCase()?.includes(searchTerm?.toLowerCase())
+                ).map((admin) => (
                 <tr 
-                  key={coder?._id} 
+                  key={admin?._id} 
                   className={`transition-colors group ${
-                    coder?.status === 'suspended' ? 'bg-red-500/5' : 'hover:bg-slate-700/10'
+                    admin?.status === 'suspended' ? 'bg-red-500/5' : 'hover:bg-slate-700/10'
                   }`}
                 >
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
                       <div className={`w-10 h-10 rounded-full border flex items-center justify-center font-bold shadow-inner transition-colors ${
-                        coder?.status === 'active' ? 'bg-slate-900 border-slate-700 text-brand' : 'bg-red-950 border-red-900 text-red-500'
+                        admin?.status === 'active' ? 'bg-slate-900 border-slate-700 text-red-500' : 'bg-red-950 border-red-900 text-red-500'
                       }`}>
-                        {(coder?.email?.[0] || 'U').toUpperCase()}
+                        {(admin?.organizationId?.name?.[0] || admin?.email?.[0] || 'O').toUpperCase()}
                       </div>
                       <div className="flex flex-col">
-                        <span className="text-sm font-medium text-slate-200">{coder?.email || 'No Email'}</span>
-                        <span className="text-[9px] text-slate-500 font-mono italic uppercase tracking-tighter">Verified Identity</span>
+                        <span className="text-sm font-medium text-slate-200">{admin?.organizationId?.name || 'N/A'}</span>
+                        <span className="text-[10px] text-slate-500 font-mono italic">{admin?.email}</span>
                       </div>
                     </div>
+                  </td>
+                  <td className="px-6 py-4">
+                    <span className="text-xs font-mono text-slate-400 bg-slate-900 px-2 py-1 rounded border border-slate-700">
+                      {admin?.organizationId?.subdomain || 'none'}.codenucleus.com
+                    </span>
                   </td>
                   <td className="px-6 py-4">
                     <div className={`flex items-center gap-1.5 font-bold text-[10px] uppercase ${
-                      coder?.status === 'active' ? 'text-emerald-500' : 'text-red-500'
+                      admin?.status === 'active' ? 'text-emerald-500' : 'text-red-500'
                     }`}>
-                      <div className={`w-1.5 h-1.5 rounded-full ${coder?.status === 'active' ? 'bg-emerald-500 animate-pulse' : 'bg-red-500'}`}></div>
-                      {coder?.status || 'unknown'}
+                      <div className={`w-1.5 h-1.5 rounded-full ${admin?.status === 'active' ? 'bg-emerald-500 animate-pulse' : 'bg-red-500'}`}></div>
+                      {admin?.status || 'unknown'}
                     </div>
-                  </td>
-                  <td className="px-6 py-4 text-xs text-slate-500 font-mono">
-                    {coder?.createdAt ? new Date(coder.createdAt).toLocaleDateString() : 'N/A'}
                   </td>
                   <td className="px-6 py-4">
                     <div className="flex items-center justify-end gap-2">
-                      {/* PASSWORD RESET BUTTON */}
                       <button 
                         onClick={() => {
-                          setSelectedCoder(coder);
+                          setSelectedAdmin(admin);
                           setIsPassModalOpen(true);
                         }}
-                        className="p-2 rounded-lg border border-slate-700 text-slate-400 hover:text-brand hover:border-brand transition cursor-pointer active:scale-90"
-                        title="Reset Password"
+                        className="p-2 rounded-lg border border-slate-700 text-slate-400 hover:text-red-500 hover:border-red-500 transition cursor-pointer active:scale-90"
+                        title="Reset Admin Password"
                       >
                         <KeyRound size={14} />
                       </button>
 
-                      {/* TOGGLE STATUS BUTTON */}
                       <button 
-                        onClick={() => promptToggleStatus(coder)}
+                        onClick={() => promptToggleStatus(admin)}
                         className={`px-4 py-1.5 rounded-lg text-[10px] font-bold uppercase transition flex items-center gap-2 border cursor-pointer active:scale-95 ${
-                          coder?.status === 'active' 
+                          admin?.status === 'active' 
                           ? 'border-red-500/30 text-red-500 hover:bg-red-500 hover:text-white' 
                           : 'border-emerald-500/30 text-emerald-500 hover:bg-emerald-500 hover:text-white'
                         }`}
                       >
-                        {coder?.status === 'active' ? <><UserX size={12} /> Suspend</> : <><UserCheck size={12} /> Activate</>}
+                        {admin?.status === 'active' ? <><UserX size={12} /> Deactivate</> : <><UserCheck size={12} /> Activate</>}
                       </button>
                     </div>
                   </td>
@@ -206,7 +201,7 @@ export default function AdminCoders() {
               ) : (
                 <tr>
                   <td colSpan="4" className="py-20 text-center text-slate-500 italic text-sm">
-                    No coders matching "{searchTerm || ''}"
+                    No organizations matching "{searchTerm || ''}"
                   </td>
                 </tr>
               )}
@@ -236,26 +231,15 @@ export default function AdminCoders() {
         </div>
       </div>
 
-      {/* --- ADD CODER MODAL --- */}
-      <AddCoderModal 
-        isOpen={isAddModalOpen} 
-        onClose={() => setIsAddModalOpen(false)} 
-        onRefresh={() => {
-            toast.success("New identity provisioned successfully");
-            fetchCoders(1);
-        }}
-        createCoderFn={userService.createCoder}
-      />
-
-      {/* --- CONFIRM SUSPEND/ACTIVATE MODAL --- */}
+      {/* --- CONFIRM DEACTIVATE MODAL --- */}
       <ConfirmModal 
         isOpen={confirmState.isOpen}
         loading={confirmState.loading}
-        title={confirmState.targetCoder?.status === 'active' ? "Suspend Access?" : "Restore Access?"}
-        message={`This will immediately ${confirmState.targetCoder?.status === 'active' ? 'block' : 'grant'} login permissions for ${confirmState.targetCoder?.email}.`}
-        confirmText={confirmState.targetCoder?.status === 'active' ? "Suspend Account" : "Activate Account"}
-        type={confirmState.targetCoder?.status === 'active' ? "danger" : "success"}
-        onClose={() => setConfirmState({ isOpen: false, targetCoder: null, loading: false })}
+        title={confirmState.targetAdmin?.status === 'active' ? "Deactivate Agency?" : "Restore Agency?"}
+        message={`This will immediately ${confirmState.targetAdmin?.status === 'active' ? 'block' : 'grant'} login permissions for the admin of ${confirmState.targetAdmin?.organizationId?.name}.`}
+        confirmText={confirmState.targetAdmin?.status === 'active' ? "Deactivate" : "Activate"}
+        type={confirmState.targetAdmin?.status === 'active' ? "danger" : "success"}
+        onClose={() => setConfirmState({ isOpen: false, targetAdmin: null, loading: false })}
         onConfirm={handleToggleStatus}
       />
 
@@ -264,9 +248,9 @@ export default function AdminCoders() {
         isOpen={isPassModalOpen}
         onClose={() => {
           setIsPassModalOpen(false);
-          setSelectedCoder(null);
+          setSelectedAdmin(null);
         }}
-        coder={selectedCoder}
+        coder={selectedAdmin}
       />
 
     </div>

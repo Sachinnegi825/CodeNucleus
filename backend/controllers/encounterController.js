@@ -41,6 +41,11 @@ export const getEncounters = async (req, res) => {
 
     // 2. Base Query (Multi-tenant lock)
     let query = { organizationId: req.user.orgId };
+
+    // 🛡️ SECURITY: Coders only see their own uploads
+    if (req.user.role === 'coder') {
+      query.uploadedBy = req.user.userId;
+    }
     
     // 3. Status Filtering Logic
     if (status === 'active') {

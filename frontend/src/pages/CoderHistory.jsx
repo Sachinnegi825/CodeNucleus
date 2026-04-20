@@ -8,8 +8,12 @@ export default function CoderHistory() {
 
   useEffect(() => {
     const fetchHistory = async () => {
-      const data = await encounterService.getEncounters('reviewed');
-      setHistory(data);
+      try {
+        const data = await encounterService.getEncounters('completed');
+        setHistory(data.encounters || []);
+      } catch (err) {
+        console.error("Failed to fetch history:", err);
+      }
     };
     fetchHistory();
   }, []);
@@ -24,12 +28,12 @@ export default function CoderHistory() {
     link.click();
   };
 
-  const filteredHistory = history.filter(item => 
-    item.fileName.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredHistory = history?.filter(item => 
+    item?.fileName?.toLowerCase().includes(searchTerm.toLowerCase())
+  ) || [];
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-500">
+    <div className="space-y-6 animate-in fade-in duration-500 pb-10">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold text-white tracking-tight">Completed Claims</h1>
@@ -74,13 +78,13 @@ export default function CoderHistory() {
                 </td>
                 <td className="px-6 py-4">
                    <span className="bg-slate-900 border border-slate-700 text-brand px-2 py-1 rounded text-[10px] font-bold">
-                     {item.aiResults?.length} CODES
+                     {item.aiResults?.length || 0} CODES
                    </span>
                 </td>
                 <td className="px-6 py-4 text-right">
                   <button 
                     onClick={() => handleDownloadAgain(item._id, item.fileName)}
-                    className="text-slate-400 hover:text-white flex items-center gap-2 ml-auto text-xs font-bold uppercase tracking-tighter transition"
+                    className="text-slate-400 hover:text-white flex items-center gap-2 ml-auto text-xs font-bold uppercase tracking-tighter transition cursor-pointer"
                   >
                     <Download size={14} /> FHIR JSON
                   </button>

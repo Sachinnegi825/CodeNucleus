@@ -26,8 +26,13 @@ getCoders: async (page = 1, limit = 10) => {
     return res.data;
   },
 
-     getAuditLogs: async (page = 1, limit = 10) => {
+  getAuditLogs: async (page = 1, limit = 10) => {
     const res = await api.get(`/users/audit-logs?page=${page}&limit=${limit}`);
     return res.data; // Now returns { logs, totalPages, ... }
+  },
+
+  getAgencies: async (page = 1, limit = 10) => {
+    const res = await api.get(`/users/agencies?page=${page}&limit=${limit}`);
+    return res.data;
   }
 };

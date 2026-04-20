@@ -4,7 +4,7 @@ import { bucket } from '../config/gcsConfig.js';
 export const updateBranding = async (req, res) => {
   try {
     const { orgId } = req.user;
-    const { primaryColor } = req.body;
+    const { primaryColor, name, fontFamily } = req.body;
     let logoUrl = req.body.logoUrl;
 
     if (req.file) {
@@ -18,8 +18,7 @@ export const updateBranding = async (req, res) => {
 
       await new Promise((resolve, reject) => {
         blobStream.on('error', reject);
-        blobStream.on('finish', async () => {
-          // REMOVED blob.makePublic() to comply with GCP Uniform Access
+        blobStream.on('finish', () => {
           logoUrl = `https://storage.googleapis.com/${process.env.GCS_BUCKET_NAME}/${fileKey}`;
           resolve();
         });
@@ -27,9 +26,16 @@ export const updateBranding = async (req, res) => {
       });
     }
 
+    const updateFields = {
+      ...(name && { name }),
+      ...(logoUrl && { logoUrl }),
+      'settings.primaryColor': primaryColor,
+      'settings.fontFamily': fontFamily || 'Inter'
+    };
+
     const updatedOrg = await Organization.findByIdAndUpdate(
       orgId, 
-      { 'settings.primaryColor': primaryColor, ...(logoUrl && { logoUrl }) }, 
+      { $set: updateFields }, 
       { new: true }
     );
 
@@ -48,9 +54,31 @@ export const getBranding = async (req, res) => {
     res.json({
       name: org.name,
       primaryColor: org.settings?.primaryColor || '#3b82f6',
+      fontFamily: org.settings?.fontFamily || 'Inter',
       logoUrl: org.logoUrl
     });
   } catch (error) {
     res.status(500).json({ error: error.message });
+  }
+};
+
+export const getPublicProfile = async (req, res) => {
+  try {
+    const { subdomain } = req.params;
+    const org = await Organization.findOne({ subdomain });
+
+    if (!org) {
+      return res.status(404).json({ message: "Organization not found" });
+    }
+
+    res.json({
+      name: org.name,
+      logoUrl: org.logoUrl,
+      primaryColor: org.settings?.primaryColor || '#3b82f6',
+            fontFamily: org.settings?.fontFamily || 'Inter',
+
+    });
+  } catch (error) {
+    res.status(500).json({ error: "Internal Server Error" });
   }
 };

@@ -25,6 +25,10 @@ export const loginUser = async (req, res) => {
       return res.status(401).json({ message: 'Invalid credentials' });
     }
 
+    if (user.status === 'suspended') {
+      return res.status(403).json({ message: 'Your account is suspended. Please contact support or the administrator.' });
+    }
+
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
       return res.status(401).json({ message: 'Invalid credentials' });
@@ -58,7 +62,7 @@ export const loginUser = async (req, res) => {
           name: user.organizationId.name,
           primaryColor: user.organizationId.settings?.primaryColor,
           logoUrl: user.organizationId.logoUrl
-        } : { name: "System Control", primaryColor: "#ef4444" , logoUrl: "" }
+        } : { name: "CodeNucleus | Enterprise AI", primaryColor: "#ef4444" , logoUrl: "" }
       }
     });
 

@@ -26,9 +26,9 @@ export default function AdminQA() {
     try {
       // Pass both status and page to the service
       const data = await encounterService.getEncounters(activeTab, page);
-      setEncounters(data.encounters || data); // Handle both paginated and non-paginated responses
-      setTotalPages(data.totalPages || 1);
-      setTotalResults(data.totalEncounters || data.length || 0);
+      setEncounters(data?.encounters || (Array.isArray(data) ? data : [])); // Handle both paginated and non-paginated responses
+      setTotalPages(data?.totalPages || 1);
+      setTotalResults(data?.totalEncounters || (Array.isArray(data) ? data.length : 0));
     } catch (err) { 
       toast.error("Sync failed"); 
     } finally { 
@@ -52,14 +52,15 @@ export default function AdminQA() {
     if (activeTab === 'completed') return;
     setLoadingPdf(true);
     try {
-      const data = await encounterService.getSecureViewUrl(encounter._id);
-      setSecurePdfUrl(data.secureUrl);
+      const data = await encounterService.getSecureViewUrl(encounter?._id);
+      setSecurePdfUrl(data?.secureUrl);
     } catch (err) { toast.error("PDF Purged for Security"); } finally { setLoadingPdf(false); }
   };
 
   const closeReview = () => { setSelectedEncounter(null); setSecurePdfUrl(null); };
 
   const handleReject = async () => {
+    if (!selectedEncounter?._id) return;
     setActionLoading(true);
     try {
       await encounterService.updateRecord(selectedEncounter._id, { status: 'returned' });
@@ -69,22 +70,23 @@ export default function AdminQA() {
   };
 
   const handleApprove = async () => {
+    if (!selectedEncounter?._id) return;
     setActionLoading(true);
     try {
       const fhirData = await encounterService.exportFHIR(selectedEncounter._id);
       const blob = new Blob([JSON.stringify(fhirData, null, 2)], { type: 'application/json' });
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
-      link.href = url; link.download = `FHIR_${selectedEncounter.fileName.split('.')[0]}.json`;
+      link.href = url; link.download = `FHIR_${(selectedEncounter?.fileName || 'export').split('.')[0]}.json`;
       link.click();
       toast.success("Purged & Exported!");
       closeReview(); fetchQueue(currentPage);
     } catch (err) { toast.error("Export Failed"); } finally { setActionLoading(false); }
   };
 
-  const filteredEncounters = encounters.filter(enc => 
-    enc?.fileName?.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    enc?.uploadedBy?.email?.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredEncounters = (encounters || []).filter(enc => 
+    enc?.fileName?.toLowerCase().includes(searchTerm?.toLowerCase() || '') || 
+    enc?.uploadedBy?.email?.toLowerCase().includes(searchTerm?.toLowerCase() || '')
   );
 
   return (
@@ -126,14 +128,14 @@ export default function AdminQA() {
             <tbody className="divide-y divide-slate-700/50">
               {loading ? (
                 <tr><td colSpan="4" className="py-20 text-center"><Loader2 className="animate-spin text-brand mx-auto" /></td></tr>
-              ) : filteredEncounters.length > 0 ? (
-                filteredEncounters.map((enc) => (
+              ) : (filteredEncounters || []).length > 0 ? (
+                (filteredEncounters || []).map((enc) => (
                   <tr key={enc?._id} className="hover:bg-slate-700/10 transition-colors">
-                    <td className="px-6 py-4 text-sm font-medium text-slate-200">{enc?.fileName}</td>
-                    <td className="px-6 py-4 text-xs text-slate-400">{enc?.uploadedBy?.email}</td>
+                    <td className="px-6 py-4 text-sm font-medium text-slate-200">{enc?.fileName || 'Unnamed Document'}</td>
+                    <td className="px-6 py-4 text-xs text-slate-400">{enc?.uploadedBy?.email || 'Unknown Coder'}</td>
                     <td className="px-6 py-4">
                       <span className={`px-2 py-0.5 rounded text-[9px] font-bold uppercase border ${activeTab === 'completed' ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' : 'bg-brand/10 text-brand border-brand/20'}`}>
-                        {enc?.status}
+                        {enc?.status || 'pending'}
                       </span>
                     </td>
                     <td className="px-6 py-4 text-right">
@@ -161,7 +163,7 @@ export default function AdminQA() {
 
         {/* --- PAGINATION FOOTER (ALWAYS VISIBLE) --- */}
         <div className="p-4 bg-slate-900/50 border-t border-slate-700 flex items-center justify-between">
-           <span className="text-xs text-slate-500 font-medium">Page {currentPage} of {totalPages}</span>
+           <span className="text-xs text-slate-500 font-medium">Page {currentPage || 1} of {totalPages || 1}</span>
            <div className="flex items-center gap-2">
               <button 
                 onClick={() => setCurrentPage(p => Math.max(p - 1, 1))}
@@ -172,7 +174,7 @@ export default function AdminQA() {
               </button>
               <button 
                 onClick={() => setCurrentPage(p => Math.min(p + 1, totalPages))}
-                disabled={currentPage === totalPages || loading}
+                disabled={(currentPage || 1) >= (totalPages || 1) || loading}
                 className="p-2 rounded-lg bg-slate-800 border border-slate-700 text-slate-400 hover:text-white disabled:opacity-30 cursor-pointer transition"
               >
                 <ChevronRight size={18} />
@@ -203,10 +205,10 @@ export default function AdminQA() {
                <div className="w-full lg:w-2/5 flex flex-col bg-slate-900">
                   <div className="p-4 border-b border-slate-800 text-xs font-bold uppercase text-slate-500">Extracted ICD-10 & CPT</div>
                   <div className="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar">
-                    {selectedEncounter.aiResults.map((res, i) => (
+                    {(selectedEncounter?.aiResults || []).map((res, i) => (
                       <div key={i} className="bg-slate-850 border border-slate-700 p-4 rounded-xl flex gap-3">
-                        <div className="text-brand font-mono font-bold text-sm bg-slate-950 p-2 rounded border border-slate-800">{res.code}</div>
-                        <div className="text-slate-300 text-xs mt-1">{res.description}</div>
+                        <div className="text-brand font-mono font-bold text-sm bg-slate-950 p-2 rounded border border-slate-800">{res?.code || 'N/A'}</div>
+                        <div className="text-slate-300 text-xs mt-1">{res?.description || 'No description provided'}</div>
                       </div>
                     ))}
                   </div>

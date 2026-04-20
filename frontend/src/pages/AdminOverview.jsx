@@ -35,7 +35,7 @@ export default function AdminOverview() {
       {/* 1. Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-white tracking-tight">CodeNucleus Analysis</h1>
+          <h1 className="text-3xl font-bold text-white tracking-tight">Intelligence Analysis</h1>
           <p className="text-slate-400 mt-1">Live organizational metrics calculated from database events.</p>
         </div>
         <div className="bg-brand/5 border border-brand/20 px-4 py-2 rounded-2xl flex items-center gap-3">
@@ -46,10 +46,10 @@ export default function AdminOverview() {
 
       {/* 2. Top Stats Row (100% Real Data) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        <StatsCard label="Total Ingestions" value={data?.summary.totalVolume} icon={FileText} color="text-blue-500" />
-        <StatsCard label="Completed Claims" value={data?.summary.completed} icon={CheckCircle2} color="text-emerald-500" />
-        <StatsCard label="Pending Work" value={data?.summary.pending} icon={Clock} color="text-amber-500" />
-        <StatsCard label="AI Accuracy" value={data?.summary.accuracy} icon={Zap} color="text-brand" />
+        <StatsCard label="Total Ingestions" value={data?.summary?.totalVolume || 0} icon={FileText} color="text-blue-500" />
+        <StatsCard label="Completed Claims" value={data?.summary?.completed || 0} icon={CheckCircle2} color="text-emerald-500" />
+        <StatsCard label="Pending Work" value={data?.summary?.pending || 0} icon={Clock} color="text-amber-500" />
+        <StatsCard label="AI Accuracy" value={data?.summary?.accuracy || '0%'} icon={Zap} color="text-brand" />
       </div>
 
       {/* 3. Real Charts Section */}
@@ -63,7 +63,7 @@ export default function AdminOverview() {
              </h3>
              <span className="text-[10px] text-slate-500 font-mono">DB LINKED</span>
           </div>
-          <ProductivityChart data={data?.chartData} />
+          <ProductivityChart data={data?.chartData || []} />
         </div>
 
         {/* Sidebar: Compliance & Top Staff */}
@@ -78,7 +78,7 @@ export default function AdminOverview() {
           </div>
 
           <div className="bg-slate-900 border border-slate-800 p-8 rounded-[2rem]">
-            <TopStaffList coders={data?.topCoders} />
+            <TopStaffList coders={data?.topCoders || []} />
           </div>
         </div>
 

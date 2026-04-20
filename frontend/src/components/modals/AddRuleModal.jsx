@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { X, Plus, Loader2 } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 export default function AddRuleModal({ isOpen, onClose, onRefresh, createRuleFn }) {
   const [formData, setFormData] = useState({ payerName: '', ruleCode: '', requirement: '', severity: 'warning' });
@@ -13,10 +14,11 @@ export default function AddRuleModal({ isOpen, onClose, onRefresh, createRuleFn 
     try {
       await createRuleFn(formData);
       setFormData({ payerName: '', ruleCode: '', requirement: '', severity: 'warning' });
+      toast.success("Business rule activated successfully");
       onRefresh();
       onClose();
     } catch (err) {
-      alert("Error deploying rule");
+      toast.error("Error deploying rule");
     } finally {
       setLoading(false);
     }

@@ -24,7 +24,7 @@ export default function CoderWorkspace() {
   const fetchRecords = async () => {
     try {
       const data = await encounterService.getEncounters('active');
-      setEncounters(data);
+      setEncounters(data.encounters || []);
     } catch (err) { toast.error("Failed to sync workspace"); }
   };
 
@@ -64,7 +64,7 @@ export default function CoderWorkspace() {
       const data = await encounterService.scrubRecord(selectedEncounter._id);
       const updated = { ...selectedEncounter, status: data.status, scrubbedText: data.scrubbedText };
       setSelectedEncounter(updated);
-      setEncounters(encounters.map(enc => enc._id === updated._id ? updated : enc));
+      setEncounters(encounters?.map(enc => enc._id === updated._id ? updated : enc));
       toast.success("PHI successfully redacted");
     } catch (err) { toast.error("DLP Scrubbing Failed."); } 
     finally { setIsScrubbing(false); }
@@ -117,8 +117,18 @@ export default function CoderWorkspace() {
       <div className="w-full lg:w-1/5 flex flex-col gap-4">
         <div className="bg-slate-800 border border-slate-700 rounded-xl p-4 shadow-lg relative overflow-hidden">
           <div className="absolute top-0 left-0 w-full h-1 bg-brand"></div>
-          <label className="flex items-center justify-center w-full h-16 border border-slate-700 border-dashed rounded-lg cursor-pointer hover:bg-slate-900 transition-colors">
-            {uploading ? <Loader2 className="animate-spin text-brand" size={20} /> : <UploadCloud className="text-slate-500" size={20} />}
+          <label className="flex flex-col items-center justify-center w-full h-24 border border-slate-700 border-dashed rounded-lg cursor-pointer hover:bg-slate-900 transition-colors gap-2">
+            {uploading ? (
+              <Loader2 className="animate-spin text-brand" size={24} />
+            ) : (
+              <>
+                <UploadCloud className="text-slate-400" size={24} />
+                <div className="flex flex-col items-center">
+                  <span className="text-[10px] font-bold text-slate-300 uppercase tracking-widest text-center">Upload Medical Record</span>
+                  <span className="text-[8px] text-slate-500 uppercase tracking-tighter">PDF Format Only</span>
+                </div>
+              </>
+            )}
             <input type="file" className="hidden" accept="application/pdf" onChange={handleUpload} />
           </label>
         </div>
@@ -126,31 +136,36 @@ export default function CoderWorkspace() {
         <div className="bg-slate-800 border border-slate-700 rounded-xl flex-1 shadow-lg flex flex-col overflow-hidden min-h-[100px] sm:min-h-[400px]">
           <div className="p-3 border-b border-slate-700 bg-slate-800/50 flex justify-between items-center">
              <h3 className="font-bold text-white text-[10px] uppercase tracking-widest">Active Queue</h3>
-             <span className="text-brand text-[10px] font-bold">{encounters.length} Files</span>
+             <span className="text-brand text-[10px] font-bold">{(encounters || []).length} Files</span>
           </div>
           <div className="flex-1 overflow-y-auto p-1 space-y-1 custom-scrollbar">
-            {encounters.map((enc) => (
-              <div key={enc._id} onClick={() => handleViewRecord(enc)}
+            {(encounters || []).map((enc) => (
+              <div key={enc?._id} onClick={() => handleViewRecord(enc)}
                 className={`p-3 rounded-lg cursor-pointer border transition-all flex flex-col gap-1 group ${
-                  selectedEncounter?._id === enc._id ? 'bg-slate-900 border-brand' : 'border-transparent hover:bg-slate-900/40'
+                  selectedEncounter?._id === enc?._id ? 'bg-slate-900 border-brand' : 'border-transparent hover:bg-slate-900/40'
                 }`}
               >
                 <div className="flex items-center justify-between w-full">
                   <div className="flex items-center gap-2 truncate">
-                     <FileText size={14} className={selectedEncounter?._id === enc._id ? 'text-brand' : 'text-slate-600'} />
-                     <span className="text-xs font-medium text-slate-300 truncate">{enc.fileName}</span>
+                     <FileText size={14} className={selectedEncounter?._id === enc?._id ? 'text-brand' : 'text-slate-600'} />
+                     <span className="text-xs font-medium text-slate-300 truncate">{enc?.fileName || 'Unnamed File'}</span>
                   </div>
                   <ChevronRight size={12} className="text-slate-700" />
                 </div>
                 {/* Show if Boss returned it */}
-                {enc.status === 'returned' && (
+                {enc?.status === 'returned' && (
                   <span className="text-[9px] text-red-500 font-bold uppercase tracking-widest bg-red-500/10 px-2 py-0.5 rounded w-fit mt-1">
                     Needs Correction
                   </span>
                 )}
               </div>
             ))}
-            {encounters.length === 0 && <p className="text-center text-xs text-slate-500 p-4">Queue is empty</p>}
+            {(encounters || []).length === 0 && (
+              <div className="flex flex-col items-center justify-center p-8 text-center gap-2 opacity-50">
+                <FileText size={20} className="text-slate-600" />
+                <p className="text-[9px] uppercase font-bold text-slate-500 tracking-wider">Queue is empty</p>
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -167,7 +182,17 @@ export default function CoderWorkspace() {
           </div>
           <div className="flex-1 bg-slate-950 flex items-center justify-center">
             {!selectedEncounter ? (
-              <p className="text-slate-700 text-[10px] uppercase font-bold tracking-widest">Select Patient to Begin</p>
+              <div className="flex flex-col items-center gap-4 animate-pulse">
+                <div className="p-6 bg-slate-900/40 rounded-full border border-slate-800/60 text-slate-800">
+                  <FileText size={40} strokeWidth={1} />
+                </div>
+                <div className="flex flex-col items-center gap-1">
+                  <p className="text-slate-600 text-[11px] uppercase font-bold tracking-[0.3em]">
+                    {(encounters || []).length === 0 ? "Upload Record to Begin" : "Select Patient from Queue"}
+                  </p>
+                  <p className="text-slate-800 text-[9px] uppercase font-medium tracking-wider">Secure AI-Powered Coding Workspace</p>
+                </div>
+              </div>
             ) : loadingPdf ? (
               <Loader2 className="animate-spin text-brand" size={24} />
             ) : (
@@ -182,7 +207,7 @@ export default function CoderWorkspace() {
         <div className="bg-slate-800 border border-slate-700 rounded-2xl p-5 shadow-2xl relative overflow-hidden transition-all">
            {!selectedEncounter ? (
               <p className="text-center text-slate-600 text-[10px] font-mono tracking-widest">SYSTEM IDLE</p>
-           ) : selectedEncounter.status === 'pending' ? (
+           ) : selectedEncounter?.status === 'pending' ? (
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
                   <div className="p-2.5 bg-amber-500/10 rounded-xl border border-amber-500/20 text-amber-500"><Lock size={20} /></div>
@@ -190,7 +215,7 @@ export default function CoderWorkspace() {
                 </div>
                 <button onClick={handleScrub} disabled={isScrubbing} className="bg-amber-500 text-slate-950 px-5 py-2.5 rounded-lg font-bold text-[11px] uppercase flex items-center gap-2 hover:bg-amber-400 cursor-pointer disabled:opacity-50 transition"><ArrowRight size={14} /> Scrub PHI</button>
               </div>
-           ) : selectedEncounter.status === 'scrubbed' ? (
+           ) : selectedEncounter?.status === 'scrubbed' ? (
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
                   <div className="p-2.5 bg-brand/10 rounded-xl border border-brand/20 text-brand"><ActivitySquare size={20} /></div>
@@ -210,23 +235,23 @@ export default function CoderWorkspace() {
                 </div>
 
                 <div className="space-y-2 max-h-[280px] overflow-y-auto pr-1 custom-scrollbar">
-                  {editableCodes.map((res, i) => (
+                  {(editableCodes || []).map((res, i) => (
                     <div key={i} className="bg-slate-900/60 border border-slate-700 p-3 rounded-xl hover:border-slate-500 transition-colors">
                       <div className="flex gap-3 items-center">
                         <div className="flex flex-col gap-1">
                            <span className="text-[8px] uppercase font-bold text-slate-500 tracking-tighter">Code</span>
-                           <input className="bg-slate-950 border border-slate-700 text-brand font-mono font-bold text-xs w-24 p-1.5 rounded-lg outline-none focus:border-brand" value={res.code} onChange={(e) => handleCodeChange(i, 'code', e.target.value)} />
+                           <input className="bg-slate-950 border border-slate-700 text-brand font-mono font-bold text-xs w-24 p-1.5 rounded-lg outline-none focus:border-brand" value={res?.code || ''} onChange={(e) => handleCodeChange(i, 'code', e.target.value)} />
                         </div>
                         <div className="flex-1 flex flex-col gap-1">
                            <span className="text-[8px] uppercase font-bold text-slate-500 tracking-tighter">Clinical Description</span>
-                           <input className="w-full bg-slate-950 border border-slate-700 text-slate-300 text-[11px] p-1.5 rounded-lg outline-none focus:border-slate-500" value={res.description} onChange={(e) => handleCodeChange(i, 'description', e.target.value)} />
+                           <input className="w-full bg-slate-950 border border-slate-700 text-slate-300 text-[11px] p-1.5 rounded-lg outline-none focus:border-slate-500" value={res?.description || ''} onChange={(e) => handleCodeChange(i, 'description', e.target.value)} />
                         </div>
                         <button onClick={() => removeCode(i)} className="text-slate-600 hover:text-red-500 cursor-pointer transition mt-4 self-center"><Trash2 size={14} /></button>
                       </div>
-                      {res.denialRisk && (
+                      {res?.denialRisk && (
                         <div className="mt-2 flex items-center gap-2 bg-red-500/5 border border-red-500/10 p-2 rounded-lg">
                           <AlertTriangle size={10} className="text-red-500" />
-                          <span className="text-[9px] text-red-400 font-bold uppercase tracking-tight">{res.denialRisk.reason}</span>
+                          <span className="text-[9px] text-red-400 font-bold uppercase tracking-tight">{res?.denialRisk?.reason || 'Potential denial risk detected'}</span>
                         </div>
                       )}
                     </div>

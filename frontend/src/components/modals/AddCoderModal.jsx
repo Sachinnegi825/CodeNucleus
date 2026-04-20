@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { X, UserPlus, Loader2 } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 export default function AddCoderModal({ isOpen, onClose, onRefresh, createCoderFn }) {
   const [email, setEmail] = useState('');
@@ -14,10 +15,11 @@ export default function AddCoderModal({ isOpen, onClose, onRefresh, createCoderF
     try {
       await createCoderFn(email, password);
       setEmail(''); setPassword('');
+      toast.success("Coder access provisioned successfully");
       onRefresh();
       onClose();
     } catch (err) {
-      alert("Error creating account");
+      toast.error(err.response?.data?.message || "Error creating account");
     } finally {
       setLoading(false);
     }

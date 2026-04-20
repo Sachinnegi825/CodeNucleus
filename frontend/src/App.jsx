@@ -4,7 +4,9 @@ import ProtectedRoute from './components/ProtectedRoute';
 
 // Pages
 import Login from './pages/Login';
-import SuperAdminDashboard from './pages/SuperAdminDashboard';
+import SuperAdminLayout from './components/SuperAdminLayout';
+import SuperAdminOverview from './pages/SuperAdminOverview';
+import SuperAdminOrganizations from './pages/SuperAdminOrganizations';
 import CoderWorkspace from './pages/CoderWorkspace';
 
 // New Admin Layout & Sub-Pages
@@ -21,46 +23,45 @@ import AdminAuditLogs from './pages/AdminAuditLogs';
 import AdminPayerRules from './pages/AdminPayerRules';
 import { Toaster } from 'react-hot-toast';
 import AdminQA from './pages/AdminQA';
+import Home from './pages/Home';
 
 export default function App() {
-   const { user } = useAuthStore();
+  const { user, branding } = useAuthStore();
 
   useEffect(() => {
-    if (user && user.organization) {
-      const org = user.organization;
-      
-      document.title = `${org.name} | Secure Workspace`;
-
-      const link = document.querySelector("link[rel~='icon']");
-
-      if (link && org.logoUrl) {
-        link.href = org.logoUrl;
-      }
-
-      const brandColor = org.settings?.primaryColor || org.primaryColor || '#3b82f6';
-      document.documentElement.style.setProperty('--brand-color', brandColor);
-    } else {
-      document.title = "CodeNucleus | Enterprise AI";
-      const link = document.querySelector("link[rel~='icon']");
-      if (link) link.href = "/favicon.svg";
+    // 1. Browser Tab Metadata
+    document.title = branding.name ? `${branding.name}` : "CodeNucleus | Enterprise AI";
+    
+    const link = document.querySelector("link[rel~='icon']");
+    if (link) {
+      link.href = branding.logoUrl || "/favicon.svg";
     }
-  }, [user]);
+
+    // 2. Global Styling (CSS Variables)
+    document.documentElement.style.setProperty('--brand-color', branding.primaryColor || '#3b82f6');
+    document.documentElement.style.setProperty('--brand-font', branding.fontFamily || 'Inter');
+    
+  }, [branding]);
 
   return (
     <Router>
           <Toaster position="top-right" reverseOrder={false} />
 
-      <div className="min-h-screen bg-slate-900 flex flex-col font-sans text-slate-200">
+      <div className="h-screen bg-slate-900 flex flex-col text-slate-200 overflow-hidden">
         <Navbar />
         
-        <div className="grow flex flex-col">
+        <div className="grow flex flex-col overflow-hidden">
           <Routes>
-            <Route path="/" element={<Navigate to="/login" />} />
+<Route path="/" element={<Home />} />
             <Route path="/login" element={<Login />} />
 
-            {/* 🔴 Super Admin: Simple page with Top Navbar */}
+            {/* 🔴 Super Admin: Sidebar Layout */}
             <Route element={<ProtectedRoute allowedRoles={['superadmin']} />}>
-              <Route path="/super-admin" element={<SuperAdminDashboard />} />
+              <Route element={<SuperAdminLayout />}>
+                <Route path="/superadmin/dashboard" element={<SuperAdminOverview />} />
+                <Route path="/superadmin/organizations" element={<SuperAdminOrganizations />} />
+                <Route path="/superadmin" element={<Navigate to="/superadmin/dashboard" replace />} />
+              </Route>
             </Route>
 
             {/* 🔵 Admin (The Boss): Uses the Sidebar Layout */}

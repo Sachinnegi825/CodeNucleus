@@ -34,7 +34,7 @@ export default function AdminLayout() {
   const toggleCollapse = () => setIsCollapsed(!isCollapsed);
 
   return (
-    <div className="flex flex-1 min-h-0 relative">
+    <div className="flex flex-1 h-full overflow-hidden relative">
       <button 
         onClick={toggleSidebar}
         className="lg:hidden cursor-pointer fixed bottom-6 right-6 z-50 p-4 bg-brand text-white rounded-full shadow-2xl hover:scale-110 transition-transform active:scale-95"
@@ -53,13 +53,13 @@ export default function AdminLayout() {
       {/* Sidebar Navigation */}
       <aside className={`
         fixed lg:static inset-y-0 left-0 z-40 bg-slate-950 border-r border-slate-800 
-        transform transition-all duration-300 ease-in-out
+        transform transition-all duration-300 ease-in-out h-full
         ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
         ${isCollapsed ? 'w-20' : 'w-64'}
       `}>
-        <div className="flex flex-col h-full">
+        <div className="flex flex-col h-full overflow-hidden">
           {/* Internal Sidebar Header */}
-          <div className={`flex items-center border-b border-slate-800 relative transition-all duration-300 ${isCollapsed ? 'justify-center h-20 px-0' : 'p-6 h-24'}`}>
+          <div className={`flex items-center border-b border-slate-800 relative shrink-0 transition-all duration-300 ${isCollapsed ? 'justify-center h-20 px-0' : 'p-6 h-24'}`}>
             {!isCollapsed && (
               <div className="flex flex-col">
                 <p className="text-[10px] uppercase font-bold text-slate-500 tracking-widest mb-1">Management</p>
@@ -102,7 +102,7 @@ export default function AdminLayout() {
           </nav>
 
           {/* Bottom Security Badge */}
-          <div className={`p-4 border-t border-slate-800 bg-slate-900/30 transition-all duration-300 ${isCollapsed ? 'flex justify-center px-0' : ''}`}>
+          <div className={`p-4 border-t border-slate-800 bg-slate-900/30 shrink-0 transition-all duration-300 ${isCollapsed ? 'flex justify-center px-0' : ''}`}>
             <div className={`flex items-center gap-2 text-slate-500 ${isCollapsed ? 'justify-center' : ''}`}>
               <ShieldCheck size={16} className="text-brand flex-shrink-0" />
               {!isCollapsed && <span className="text-[10px] font-bold uppercase tracking-tighter whitespace-nowrap overflow-hidden">Banned PHI Access</span>}
@@ -112,11 +112,11 @@ export default function AdminLayout() {
       </aside>
 
       {/* Main Content Area */}
-      <main className="flex-1 bg-slate-900 overflow-y-auto p-4 md:p-8 lg:p-10 transition-all duration-300">
+      <main className="flex-1 bg-slate-900 overflow-y-auto p-4 md:p-8 lg:p-10 transition-all duration-300 h-full scroll-smooth">
         <div className="max-w-6xl mx-auto">
           <Outlet />
         </div>
       </main>
     </div>
   );
-}
+  }
