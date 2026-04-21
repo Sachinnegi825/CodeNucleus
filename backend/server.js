@@ -15,6 +15,9 @@ import payerRuleRoutes from './routes/payerRuleRoutes.js';
 dotenv.config();
 const app = express();
 
+// Enable trust proxy for Render (necessary for secure cookies)
+app.set('trust proxy', 1);
+
 // Middleware
 app.use(express.json());
 app.use(cookieParser());

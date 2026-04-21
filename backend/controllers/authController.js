@@ -40,7 +40,7 @@ export const loginUser = async (req, res) => {
     res.cookie('accessToken', accessToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production', 
-      sameSite: 'strict',
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
       maxAge: 15 * 60 * 1000 // 15 minutes
     });
 
@@ -48,7 +48,7 @@ export const loginUser = async (req, res) => {
     res.cookie('refreshToken', refreshToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production', 
-      sameSite: 'strict',
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
       path: '/api/auth/refresh', // Only sent to refresh endpoint
       maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
     });
@@ -93,7 +93,7 @@ export const refreshToken = async (req, res) => {
     res.cookie('accessToken', newAccessToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
       maxAge: 15 * 60 * 1000
     });
 
@@ -104,7 +104,13 @@ export const refreshToken = async (req, res) => {
 };
 
 export const logoutUser = async (req, res) => {
-  res.clearCookie('accessToken');
-  res.clearCookie('refreshToken', { path: '/api/auth/refresh' });
+  const cookieOptions = {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+  };
+
+  res.clearCookie('accessToken', cookieOptions);
+  res.clearCookie('refreshToken', { ...cookieOptions, path: '/api/auth/refresh' });
   res.json({ message: 'Logged out successfully' });
 };
