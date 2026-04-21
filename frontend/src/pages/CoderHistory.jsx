@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
 import { encounterService } from '../services/encounterService';
-import { FileCheck, Download, Calendar, User, Search } from 'lucide-react';
+import { FileCheck, Download, Calendar, Loader2, Search } from 'lucide-react';
 
 export default function CoderHistory() {
   const [history, setHistory] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
@@ -13,6 +14,8 @@ export default function CoderHistory() {
         setHistory(data.encounters || []);
       } catch (err) {
         console.error("Failed to fetch history:", err);
+      } finally {
+        setLoading(false);
       }
     };
     fetchHistory();
@@ -31,6 +34,13 @@ export default function CoderHistory() {
   const filteredHistory = history?.filter(item => 
     item?.fileName?.toLowerCase().includes(searchTerm.toLowerCase())
   ) || [];
+
+  if (loading) return (
+    <div className="h-[60vh] flex flex-col items-center justify-center text-slate-500 gap-4">
+      <Loader2 className="animate-spin text-brand" size={40} />
+      <p className="font-mono text-[10px] uppercase tracking-[0.3em]">Syncing Archived Claims...</p>
+    </div>
+  );
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500 pb-10">
