@@ -59,50 +59,52 @@ export default function CoderHistory() {
         </div>
       </div>
 
-      <div className="bg-slate-800 border border-slate-700 rounded-2xl overflow-hidden shadow-xl">
-        <table className="w-full text-left border-collapse">
-          <thead className="bg-slate-900/50 text-slate-500 text-[10px] uppercase tracking-widest">
-            <tr>
-              <th className="px-6 py-4">Document</th>
-              <th className="px-6 py-4">Finalized Date</th>
-              <th className="px-6 py-4">Codes Extracted</th>
-              <th className="px-6 py-4 text-right">Actions</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-700/50">
-            {filteredHistory.map((item) => (
-              <tr key={item._id} className="hover:bg-slate-700/20 transition-colors group">
-                <td className="px-6 py-4">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 bg-emerald-500/10 rounded-lg text-emerald-500">
-                      <FileCheck size={18} />
-                    </div>
-                    <span className="text-sm font-medium text-slate-200">{item.fileName}</span>
-                  </div>
-                </td>
-                <td className="px-6 py-4">
-                   <div className="flex items-center gap-2 text-xs text-slate-400">
-                     <Calendar size={14} />
-                     {new Date(item.updatedAt).toLocaleDateString()}
-                   </div>
-                </td>
-                <td className="px-6 py-4">
-                   <span className="bg-slate-900 border border-slate-700 text-brand px-2 py-1 rounded text-[10px] font-bold">
-                     {item.aiResults?.length || 0} CODES
-                   </span>
-                </td>
-                <td className="px-6 py-4 text-right">
-                  <button 
-                    onClick={() => handleDownloadAgain(item._id, item.fileName)}
-                    className="text-slate-400 hover:text-white flex items-center gap-2 ml-auto text-xs font-bold uppercase tracking-tighter transition cursor-pointer"
-                  >
-                    <Download size={14} /> FHIR JSON
-                  </button>
-                </td>
+      <div className="bg-slate-800 border border-slate-700 rounded-2xl shadow-xl overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left border-collapse min-w-[700px] md:min-w-full">
+            <thead className="bg-slate-900/50 text-slate-500 text-[10px] uppercase tracking-widest">
+              <tr>
+                <th className="px-6 py-4 whitespace-nowrap">Document</th>
+                <th className="px-6 py-4 whitespace-nowrap">Finalized Date</th>
+                <th className="px-6 py-4 whitespace-nowrap">Codes Extracted</th>
+                <th className="px-6 py-4 text-right whitespace-nowrap">Actions</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody className="divide-y divide-slate-700/50">
+              {filteredHistory.map((item) => (
+                <tr key={item._id} className="hover:bg-slate-700/20 transition-colors group">
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-emerald-500/10 rounded-lg text-emerald-500">
+                        <FileCheck size={18} />
+                      </div>
+                      <span className="text-sm font-medium text-slate-200">{item.fileName}</span>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                     <div className="flex items-center gap-2 text-xs text-slate-400">
+                       <Calendar size={14} />
+                       {new Date(item.updatedAt).toLocaleDateString()}
+                     </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                     <span className="bg-slate-900 border border-slate-700 text-brand px-2 py-1 rounded text-[10px] font-bold">
+                       {item.aiResults?.length || 0} CODES
+                     </span>
+                  </td>
+                  <td className="px-6 py-4 text-right whitespace-nowrap">
+                    <button 
+                      onClick={() => handleDownloadAgain(item._id, item.fileName)}
+                      className="text-slate-400 hover:text-white flex items-center gap-2 ml-auto text-xs font-bold uppercase tracking-tighter transition cursor-pointer"
+                    >
+                      <Download size={14} /> FHIR JSON
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
         
         {filteredHistory.length === 0 && (
           <div className="py-20 text-center text-slate-500 italic text-sm">

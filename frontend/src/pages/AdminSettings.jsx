@@ -116,11 +116,9 @@ export default function AdminSettings() {
   };
 
   if (fetching) return (
-    <div className="flex flex-col items-center justify-center h-64 text-slate-500">
-      <RefreshCw className="animate-spin mb-4" size={32} />
-      <p className="font-mono text-xs uppercase tracking-widest text-center">
-        Syncing Identity Assets...
-      </p>
+    <div className="h-[60vh] flex flex-col items-center justify-center text-slate-500 gap-4">
+      <Loader2 className="animate-spin text-brand" size={40} />
+      <p className="font-mono text-[10px] uppercase tracking-[0.3em]">Syncing Identity Assets...</p>
     </div>
   );
 

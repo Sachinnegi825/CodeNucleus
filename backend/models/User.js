@@ -13,4 +13,7 @@ role: { type: String, enum:['superadmin', 'admin', 'coder'], default: 'coder' },
   refreshToken: String
 }, { timestamps: true });
 
+// Index for organization lookups
+userSchema.index({ organizationId: 1 });
+
 export default mongoose.model('User', userSchema);

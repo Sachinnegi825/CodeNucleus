@@ -6,22 +6,18 @@ const encounterSchema = new mongoose.Schema({
   
   status: { 
     type: String, 
-    enum:['pending', 'scrubbed', 'coded', 'reviewed', 'completed'], 
+    enum:['pending', 'scrubbed', 'coded', 'pending_qa', 'returned', 'completed'], 
     default: 'pending' 
   },
   
   fileName: String, 
   pdfS3Key: { type: String, required: true }, 
   
-  // NEW: Text Storage for the AI Pipeline
+  // Text Storage for the AI Pipeline
   rawText: { type: String },
   scrubbedText: { type: String },
   phiMap: { type: Map, of: String }, // Stores {"[PERSON_NAME_1]": "John Doe"}
-  status: { 
-  type: String, 
-  enum:['pending', 'scrubbed', 'coded', 'pending_qa', 'returned', 'completed'], 
-  default: 'pending' 
-},
+
   aiResults:[{
     code: String,
     description: String,
@@ -30,5 +26,10 @@ const encounterSchema = new mongoose.Schema({
     denialRisk: { score: Number, reason: String }
   }]
 }, { timestamps: true });
+
+// Performance Indexes for Senior-Level Scaling
+encounterSchema.index({ organizationId: 1, status: 1 });
+encounterSchema.index({ organizationId: 1, uploadedBy: 1, status: 1 });
+encounterSchema.index({ createdAt: -1 }); // For recent history queries
 
 export default mongoose.model('Encounter', encounterSchema);

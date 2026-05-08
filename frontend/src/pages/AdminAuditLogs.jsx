@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { userService } from '../services/userService';
 import { 
   ShieldCheck, Search, ShieldAlert, Clock, 
-  User, Fingerprint, ChevronLeft, ChevronRight 
+  User, Fingerprint, ChevronLeft, ChevronRight, Loader2
 } from 'lucide-react';
 
 export default function AdminAuditLogs() {
@@ -72,9 +72,9 @@ export default function AdminAuditLogs() {
               {loading ? (
                 <tr>
                   <td colSpan="5" className="py-20 text-center">
-                    <div className="flex justify-center items-center gap-3 text-slate-500">
-                      <div className="w-4 h-4 border-2 border-brand border-t-transparent rounded-full animate-spin"></div>
-                      Fetching Encrypted Logs...
+                    <div className="flex justify-center items-center gap-3 text-slate-500 font-mono text-xs italic">
+                      <Loader2 className="animate-spin text-brand" size={16} />
+                      Syncing Encrypted Logs...
                     </div>
                   </td>
                 </tr>

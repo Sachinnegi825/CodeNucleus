@@ -32,14 +32,10 @@ export const uploadRecord = async (req, res) => {
 
 export const getEncounters = async (req, res) => {
   try {
-    const { status, page = 1, limit = 10 } = req.query;
-    
-    // 1. Convert to integers for math
-    const pageNum = parseInt(page);
+    const { status, limit = 10, cursor } = req.query;
     const limitNum = parseInt(limit);
-    const skip = (pageNum - 1) * limitNum;
 
-    // 2. Base Query (Multi-tenant lock)
+    // Base Query (Multi-tenant lock)
     let query = { organizationId: req.user.orgId };
 
     // 🛡️ SECURITY: Coders only see their own uploads
@@ -47,33 +43,42 @@ export const getEncounters = async (req, res) => {
       query.uploadedBy = req.user.userId;
     }
     
-    // 3. Status Filtering Logic
+    // Status Filtering Logic
     if (status === 'active') {
-      // Coder sees new files or files sent back by the Admin
       query.status = { $in: ['pending', 'scrubbed', 'coded', 'returned'] }; 
     } else if (status === 'pending_qa') {
-      // Admin sees files waiting for approval
       query.status = 'pending_qa';
     } else if (status === 'completed') {
-      // History / Archive
       query.status = 'completed';
     }
 
-    // 4. Execute Parallel Queries (Count + Find)
-    const [totalEncounters, encounters] = await Promise.all([
-      Encounter.countDocuments(query),
-      Encounter.find(query)
-        .sort({ createdAt: -1 })
-        .populate('uploadedBy', 'email')
-        .skip(skip)
-        .limit(limitNum)
-    ]);
+    // Cursor-based Pagination Logic (Senior Level)
+    if (cursor) {
+      // Assuming cursor is in format "timestamp_id"
+      const [timestamp, id] = cursor.split('_');
+      query.$or = [
+        { createdAt: { $lt: new Date(parseInt(timestamp)) } },
+        { createdAt: new Date(parseInt(timestamp)), _id: { $lt: id } }
+      ];
+    }
+
+    // Execute Query
+    const encounters = await Encounter.find(query)
+      .sort({ createdAt: -1, _id: -1 })
+      .populate('uploadedBy', 'email')
+      .limit(limitNum + 1); // Fetch one extra to determine if there is a next page
+
+    const hasNextPage = encounters.length > limitNum;
+    const results = hasNextPage ? encounters.slice(0, -1) : encounters;
+
+    const nextCursor = hasNextPage 
+      ? `${new Date(results[results.length - 1].createdAt).getTime()}_${results[results.length - 1]._id}`
+      : null;
 
     res.json({
-      encounters,
-      totalEncounters,
-      totalPages: Math.ceil(totalEncounters / limitNum),
-      currentPage: pageNum
+      encounters: results,
+      nextCursor,
+      hasNextPage
     });
 
   } catch (error) {
@@ -85,31 +90,29 @@ export const getEncounters = async (req, res) => {
 // 2. NEW: Get Coder Performance Stats
 export const getCoderStats = async (req, res) => {
   try {
-    const userId = req.user.userId;
-    const orgId = req.user.orgId;
+    const userId = new mongoose.Types.ObjectId(req.user.userId);
+    const orgId = new mongoose.Types.ObjectId(req.user.orgId);
 
-    const allRecords = await Encounter.find({ organizationId: orgId, uploadedBy: userId });
+    // Optimized: Use parallel countDocuments instead of loading all records into memory
+    const [totalUploaded, completed, pending, confidenceStats] = await Promise.all([
+      Encounter.countDocuments({ organizationId: orgId, uploadedBy: userId }),
+      Encounter.countDocuments({ organizationId: orgId, uploadedBy: userId, status: 'completed' }),
+      Encounter.countDocuments({ organizationId: orgId, uploadedBy: userId, status: { $ne: 'completed' } }),
+      Encounter.aggregate([
+        { $match: { organizationId: orgId, uploadedBy: userId } },
+        { $unwind: "$aiResults" },
+        { $group: { _id: null, avgConf: { $avg: "$aiResults.confidence" } } }
+      ])
+    ]);
 
-    const stats = {
-      totalUploaded: allRecords.length,
-      completed: allRecords.filter(e => e.status === 'reviewed').length,
-      pending: allRecords.filter(e => e.status !== 'reviewed').length,
-      avgConfidence: 0
-    };
-
-    // Calculate average AI confidence from results
-    let totalConf = 0;
-    let count = 0;
-    allRecords.forEach(enc => {
-      enc.aiResults.forEach(res => {
-        totalConf += res.confidence || 0;
-        count++;
-      });
+    res.json({
+      totalUploaded,
+      completed,
+      pending,
+      avgConfidence: confidenceStats[0]?.avgConf?.toFixed(2) || 0
     });
-    stats.avgConfidence = count > 0 ? (totalConf / count).toFixed(2) : 0;
-
-    res.json(stats);
   } catch (error) {
+    console.error("Stats Error:", error);
     res.status(500).json({ error: "Failed to fetch stats" });
   }
 };

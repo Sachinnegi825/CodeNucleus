@@ -187,12 +187,12 @@ export default function AdminQA() {
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-2 md:p-6">
           <div className="absolute inset-0 bg-slate-950/90 backdrop-blur-sm" onClick={closeReview}></div>
           <div className="relative bg-slate-900 border border-slate-700 w-full h-full max-w-[1600px] rounded-3xl shadow-2xl flex flex-col overflow-hidden animate-in zoom-in-95">
-            <div className="h-16 border-b border-slate-800 flex items-center justify-between px-6 bg-slate-950/50">
+            <div className="h-16 shrink-0 border-b border-slate-800 flex items-center justify-between px-6 bg-slate-950/50">
                <span className="text-xs font-bold text-white uppercase tracking-widest">{activeTab === 'completed' ? 'Anonymized Record' : 'QA Audit'}</span>
                <button onClick={closeReview} className="text-slate-500 hover:text-white cursor-pointer"><X size={24} /></button>
             </div>
             <div className="flex-1 flex flex-col lg:flex-row overflow-hidden">
-               <div className="w-full lg:w-3/5 bg-slate-950 border-r border-slate-800 relative">
+               <div className="w-full lg:w-3/5 bg-slate-950 border-r border-slate-800 relative min-h-[300px] lg:min-h-0">
                  {activeTab === 'completed' ? (
                    <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-10">
                      <ShieldAlert size={48} className="text-amber-500 mb-4 opacity-50" />
@@ -202,20 +202,20 @@ export default function AdminQA() {
                  ) : loadingPdf ? <div className="flex h-full items-center justify-center"><Loader2 className="animate-spin text-brand" /></div>
                  : <iframe src={`${securePdfUrl}#toolbar=0&view=FitH`} className="w-full h-full border-none" />}
                </div>
-               <div className="w-full lg:w-2/5 flex flex-col bg-slate-900">
-                  <div className="p-4 border-b border-slate-800 text-xs font-bold uppercase text-slate-500">Extracted ICD-10 & CPT</div>
+               <div className="w-full lg:w-2/5 flex flex-col bg-slate-900 overflow-hidden">
+                  <div className="p-4 shrink-0 border-b border-slate-800 text-xs font-bold uppercase text-slate-500">Extracted ICD-10 & CPT</div>
                   <div className="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar">
                     {(selectedEncounter?.aiResults || []).map((res, i) => (
-                      <div key={i} className="bg-slate-850 border border-slate-700 p-4 rounded-xl flex gap-3">
-                        <div className="text-brand font-mono font-bold text-sm bg-slate-950 p-2 rounded border border-slate-800">{res?.code || 'N/A'}</div>
-                        <div className="text-slate-300 text-xs mt-1">{res?.description || 'No description provided'}</div>
+                      <div key={i} className="bg-slate-850 border border-slate-700 p-4 rounded-xl flex gap-3 hover:border-slate-500 transition-colors">
+                        <div className="text-brand font-mono font-bold text-sm bg-slate-950 p-2 rounded border border-slate-800 h-fit shrink-0">{res?.code || 'N/A'}</div>
+                        <div className="text-slate-300 text-xs mt-1 leading-relaxed">{res?.description || 'No description provided'}</div>
                       </div>
                     ))}
                   </div>
                   {activeTab === 'pending_qa' && (
-                    <div className="p-6 border-t border-slate-800 flex gap-4">
-                       <button disabled={actionLoading} onClick={handleReject} className="flex-1 bg-slate-800 text-slate-400 py-3 rounded-xl font-bold text-[10px] uppercase cursor-pointer hover:bg-red-600 hover:text-white transition">Return</button>
-                       <button disabled={actionLoading} onClick={handleApprove} className="flex-1 bg-emerald-600 text-white py-3 rounded-xl font-bold text-[10px] uppercase cursor-pointer shadow-lg hover:bg-emerald-500 transition">Approve & Export</button>
+                    <div className="p-6 shrink-0 border-t border-slate-800 flex gap-4 bg-slate-950/30">
+                       <button disabled={actionLoading} onClick={handleReject} className="flex-1 bg-slate-800 text-slate-400 py-3 rounded-xl font-bold text-[10px] uppercase cursor-pointer hover:bg-red-600 hover:text-white transition active:scale-95">Return</button>
+                       <button disabled={actionLoading} onClick={handleApprove} className="flex-1 bg-emerald-600 text-white py-3 rounded-xl font-bold text-[10px] uppercase cursor-pointer shadow-lg hover:bg-emerald-500 transition active:scale-95">Approve & Export</button>
                     </div>
                   )}
                </div>
