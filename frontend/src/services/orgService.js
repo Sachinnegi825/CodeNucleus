@@ -17,5 +17,10 @@ export const orgService = {
       headers: { 'Content-Type': 'multipart/form-data' }
     });
     return res.data;
+  },
+
+  toggleOrgStatus: async (id) => {
+    const res = await api.patch(`/orgs/${id}/status`);
+    return res.data;
   }
-};
+};

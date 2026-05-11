@@ -1,5 +1,5 @@
 import Organization from '../models/Organization.js';
-import { bucket } from '../config/gcsConfig.js'; 
+import { bucket } from '../config/gcsConfig.js';
 
 export const updateBranding = async (req, res) => {
   try {
@@ -10,7 +10,7 @@ export const updateBranding = async (req, res) => {
     if (req.file) {
       const fileKey = `logos/${orgId}-${Date.now()}-${req.file.originalname.replace(/\s+/g, '_')}`;
       const blob = bucket.file(fileKey);
-      
+
       const blobStream = blob.createWriteStream({
         resumable: false,
         contentType: req.file.mimetype,
@@ -34,8 +34,8 @@ export const updateBranding = async (req, res) => {
     };
 
     const updatedOrg = await Organization.findByIdAndUpdate(
-      orgId, 
-      { $set: updateFields }, 
+      orgId,
+      { $set: updateFields },
       { new: true }
     );
 
@@ -75,10 +75,38 @@ export const getPublicProfile = async (req, res) => {
       name: org.name,
       logoUrl: org.logoUrl,
       primaryColor: org.settings?.primaryColor || '#3b82f6',
-            fontFamily: org.settings?.fontFamily || 'Inter',
+      fontFamily: org.settings?.fontFamily || 'Inter',
 
     });
   } catch (error) {
     res.status(500).json({ error: "Internal Server Error" });
+  }
+};
+
+export const toggleOrgStatus = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Only superadmins should reach this via routes, but extra check for safety
+    if (req.user.role !== 'superadmin') {
+      return res.status(403).json({ message: "Only superadmins can manage organization status" });
+    }
+
+    const org = await Organization.findById(id);
+    if (!org) return res.status(404).json({ message: "Organization not found" });
+
+
+
+    org.status = (org.status || 'active') === 'active'
+      ? 'suspended'
+      : 'active';
+    await org.save();
+
+    res.json({
+      message: `Organization is now ${org.status}`,
+      status: org.status
+    });
+  } catch (error) {
+    res.status(500).json({ error: "Failed to update organization status" });
   }
 };

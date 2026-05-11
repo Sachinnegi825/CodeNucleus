@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
 import { userService } from '../services/userService';
+import { orgService } from '../services/orgService';
 import { 
   Building2, ChevronLeft, 
-  ChevronRight, UserX, UserCheck, Loader2, KeyRound, Search, X 
+  ChevronRight, UserX, UserCheck, Loader2, KeyRound, Search, X, ShieldAlert, ShieldCheck
 } from 'lucide-react';
 import ConfirmModal from '../components/modals/ConfirmModal';
 import UpdatePasswordModal from '../components/modals/UpdatePasswordModal';
@@ -57,19 +58,27 @@ export default function SuperAdminOrganizations() {
 
   const handleToggleStatus = async () => {
     const admin = confirmState.targetAdmin;
-    const action = admin?.status === 'active' ? 'Suspend' : 'Activate';
+    const org = admin?.organizationId;
+    
+    if (!org?._id) {
+      toast.error("Organization ID not found");
+      return;
+    }
+
+    const currentStatus = org.status || 'active';
+    const action = currentStatus === 'active' ? 'Suspend' : 'Activate';
     
     setConfirmState(prev => ({ ...prev, loading: true }));
 
-    const statusPromise = userService.toggleStatus(admin?._id);
-
-    toast.promise(statusPromise, {
-      loading: `Processing ${action}...`,
-      success: (data) => `Agency Admin ${admin?.email || 'Unknown'} is now ${data?.status || 'updated'}`,
-      error: `Could not update agency status`,
-    });
-
     try {
+      const statusPromise = orgService.toggleOrgStatus(org._id);
+
+      toast.promise(statusPromise, {
+        loading: `Processing ${action} for ${org.name}...`,
+        success: (data) => `Organization ${org.name} is now ${data?.status || 'updated'}`,
+        error: `Could not update organization status`,
+      });
+
       await statusPromise;
       setConfirmState({ isOpen: false, targetAdmin: null, loading: false });
       fetchAgencies(currentPage);
@@ -78,6 +87,7 @@ export default function SuperAdminOrganizations() {
       console.error(err);
     }
   };
+
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500 pb-10">
@@ -142,13 +152,13 @@ export default function SuperAdminOrganizations() {
                 <tr 
                   key={admin?._id} 
                   className={`transition-colors group ${
-                    admin?.status === 'suspended' ? 'bg-red-500/5' : 'hover:bg-slate-700/10'
+                    admin?.organizationId?.status === 'suspended' ? 'bg-red-500/5' : 'hover:bg-slate-700/10'
                   }`}
                 >
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
                       <div className={`w-10 h-10 rounded-full border flex items-center justify-center font-bold shadow-inner transition-colors ${
-                        admin?.status === 'active' ? 'bg-slate-900 border-slate-700 text-red-500' : 'bg-red-950 border-red-900 text-red-500'
+                        (admin?.organizationId?.status || 'active') === 'active' ? 'bg-slate-900 border-slate-700 text-red-500' : 'bg-red-950 border-red-900 text-red-500'
                       }`}>
                         {(admin?.organizationId?.name?.[0] || admin?.email?.[0] || 'O').toUpperCase()}
                       </div>
@@ -165,10 +175,10 @@ export default function SuperAdminOrganizations() {
                   </td>
                   <td className="px-6 py-4">
                     <div className={`flex items-center gap-1.5 font-bold text-[10px] uppercase ${
-                      admin?.status === 'active' ? 'text-emerald-500' : 'text-red-500'
+                      (admin?.organizationId?.status || 'active') === 'active' ? 'text-emerald-500' : 'text-red-500'
                     }`}>
-                      <div className={`w-1.5 h-1.5 rounded-full ${admin?.status === 'active' ? 'bg-emerald-500 animate-pulse' : 'bg-red-500'}`}></div>
-                      {admin?.status || 'unknown'}
+                      <div className={`w-1.5 h-1.5 rounded-full ${(admin?.organizationId?.status || 'active') === 'active' ? 'bg-emerald-500 animate-pulse' : 'bg-red-500'}`}></div>
+                      {admin?.organizationId?.status || 'active'}
                     </div>
                   </td>
                   <td className="px-6 py-4">
@@ -187,17 +197,18 @@ export default function SuperAdminOrganizations() {
                       <button 
                         onClick={() => promptToggleStatus(admin)}
                         className={`px-4 py-1.5 rounded-lg text-[10px] font-bold uppercase transition flex items-center gap-2 border cursor-pointer active:scale-95 ${
-                          admin?.status === 'active' 
+                          (admin?.organizationId?.status || 'active') === 'active' 
                           ? 'border-red-500/30 text-red-500 hover:bg-red-500 hover:text-white' 
                           : 'border-emerald-500/30 text-emerald-500 hover:bg-emerald-500 hover:text-white'
                         }`}
                       >
-                        {admin?.status === 'active' ? <><UserX size={12} /> Deactivate</> : <><UserCheck size={12} /> Activate</>}
+                        {(admin?.organizationId?.status || 'active') === 'active' ? <><ShieldAlert size={12} /> Suspend Org</> : <><ShieldCheck size={12} /> Activate Org</>}
                       </button>
                     </div>
                   </td>
                 </tr>
               ))
+
               ) : (
                 <tr>
                   <td colSpan="4" className="py-20 text-center text-slate-500 italic text-sm">
@@ -235,13 +246,14 @@ export default function SuperAdminOrganizations() {
       <ConfirmModal 
         isOpen={confirmState.isOpen}
         loading={confirmState.loading}
-        title={confirmState.targetAdmin?.status === 'active' ? "Deactivate Agency?" : "Restore Agency?"}
-        message={`This will immediately ${confirmState.targetAdmin?.status === 'active' ? 'block' : 'grant'} login permissions for the admin of ${confirmState.targetAdmin?.organizationId?.name}.`}
-        confirmText={confirmState.targetAdmin?.status === 'active' ? "Deactivate" : "Activate"}
-        type={confirmState.targetAdmin?.status === 'active' ? "danger" : "success"}
+        title={(confirmState.targetAdmin?.organizationId?.status || 'active') === 'active' ? "Suspend Organization?" : "Restore Organization?"}
+        message={`This will immediately ${(confirmState.targetAdmin?.organizationId?.status || 'active') === 'active' ? 'block' : 'grant'} access for ALL users belonging to ${confirmState.targetAdmin?.organizationId?.name}.`}
+        confirmText={(confirmState.targetAdmin?.organizationId?.status || 'active') === 'active' ? "Suspend" : "Activate"}
+        type={(confirmState.targetAdmin?.organizationId?.status || 'active') === 'active' ? "danger" : "success"}
         onClose={() => setConfirmState({ isOpen: false, targetAdmin: null, loading: false })}
         onConfirm={handleToggleStatus}
       />
+
 
       {/* --- UPDATE PASSWORD MODAL --- */}
       <UpdatePasswordModal 

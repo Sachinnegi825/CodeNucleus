@@ -3,7 +3,7 @@ import { encounterService } from '../services/encounterService';
 import { Loader2, FileText, CheckCircle2, Clock, Zap, TrendingUp } from 'lucide-react';
 
 // Components
-import StatsCard from '../components/dashboard/StatsCard';
+import StatsCard from '../components/ui/StatsCard';
 import ProductivityChart from '../components/dashboard/ProductivityChart';
 import TopStaffList from '../components/dashboard/TopStaffList';
 

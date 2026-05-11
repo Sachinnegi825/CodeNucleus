@@ -95,7 +95,7 @@ export default function CoderWorkspace() {
   const handleSubmitToQA = async () => {
     const promise = encounterService.updateRecord(selectedEncounter._id, {
       aiResults: editableCodes,
-      status: 'pending_qa' // Sends to Boss
+      status: 'pending_qa'
     });
 
     toast.promise(promise, {

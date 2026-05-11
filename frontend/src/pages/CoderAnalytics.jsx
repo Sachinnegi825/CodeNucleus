@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { encounterService } from '../services/encounterService';
 import { BarChart3, CheckCircle2, Clock, Zap, Target } from 'lucide-react';
-import StatsCard from '../components/dashboard/StatsCard';
+import StatsCard from '../components/ui/StatsCard';
 
 export default function CoderAnalytics() {
   const [stats, setStats] = useState(null);

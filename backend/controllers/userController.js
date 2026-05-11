@@ -151,19 +151,12 @@ export const toggleUserStatus = async (req, res) => {
     user.status = user.status === 'active' ? 'suspended' : 'active';
     await user.save();
 
-    // Cascading: If a Super Admin suspends an Agency Admin, suspend ALL coders in that agency
-    if (user.role === 'admin' && req.user.role === 'superadmin') {
-      await User.updateMany(
-        { organizationId: user.organizationId },
-        { $set: { status: user.status } }
-      );
-    }
-
     res.json({ message: `User is now ${user.status}`, status: user.status });
   } catch (error) {
     res.status(500).json({ error: "Failed to update user status" });
   }
 };
+
 
 
 export const getAuditLogs = async (req, res) => {

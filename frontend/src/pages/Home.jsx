@@ -13,11 +13,11 @@ export default function Home() {
       <Navbar />
       <main>
         <Hero />
- <TrustLogos/>
-        <HowItWorks/>
+        <TrustLogos />
+        <HowItWorks />
         <Features />
         <CTA />      </main>
-      <Footer/>
+      <Footer />
     </div>
   );
 }

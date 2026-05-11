@@ -3,10 +3,10 @@ import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
 
 const generateTokens = (user) => {
-  const payload = { 
-    userId: user._id, 
-    role: user.role, 
-    orgId: user.organizationId ? user.organizationId._id : (user.organizationId || null) 
+  const payload = {
+    userId: user._id,
+    role: user.role,
+    orgId: user.organizationId ? user.organizationId._id : (user.organizationId || null)
   };
 
   const accessToken = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '15m' });
@@ -21,7 +21,7 @@ export const loginUser = async (req, res) => {
   try {
     const user = await User.findOne({ email }).populate('organizationId');
 
-    
+
     if (!user) {
       return res.status(401).json({ message: 'Invalid credentials' });
     }
@@ -29,6 +29,11 @@ export const loginUser = async (req, res) => {
     if (user.status === 'suspended') {
       return res.status(403).json({ message: 'Your account is suspended. Please contact support or the administrator.' });
     }
+
+    if (user.organizationId && user.organizationId.status === 'suspended') {
+      return res.status(403).json({ message: 'Your organization is suspended. Access denied.' });
+    }
+
 
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
@@ -40,7 +45,7 @@ export const loginUser = async (req, res) => {
     // Set Access Token Cookie (Short-lived)
     res.cookie('accessToken', accessToken, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production', 
+      secure: process.env.NODE_ENV === 'production',
       sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
       maxAge: 15 * 60 * 1000 // 15 minutes
     });
@@ -48,7 +53,7 @@ export const loginUser = async (req, res) => {
     // Set Refresh Token Cookie (Long-lived)
     res.cookie('refreshToken', refreshToken, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production', 
+      secure: process.env.NODE_ENV === 'production',
       sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
       path: '/api/auth/refresh', // Only sent to refresh endpoint
       maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
@@ -66,7 +71,7 @@ export const loginUser = async (req, res) => {
           fontFamily: user.organizationId.settings?.fontFamily,
           subdomain: user.organizationId.subdomain,
 
-        } : { name: "CodeNucleus | Enterprise AI", primaryColor: "#ef4444" , logoUrl: "" }
+        } : { name: "CodeNucleus | Enterprise AI", primaryColor: "#ef4444", logoUrl: "" }
       }
     });
 
@@ -84,12 +89,30 @@ export const refreshToken = async (req, res) => {
   try {
     const decoded = jwt.verify(token, process.env.REFRESH_TOKEN_SECRET);
     
+    // Fetch user and organization to check status
+    const user = await User.findById(decoded.userId)
+      .populate('organizationId', 'status')
+      .select('status organizationId role');
+
+    if (!user || user.status === 'suspended') {
+      res.clearCookie('accessToken');
+      res.clearCookie('refreshToken', { path: '/api/auth/refresh' });
+      return res.status(403).json({ message: 'Access denied. Account suspended.' });
+    }
+
+    if (user.organizationId && user.organizationId.status === 'suspended') {
+      res.clearCookie('accessToken');
+      res.clearCookie('refreshToken', { path: '/api/auth/refresh' });
+      return res.status(403).json({ message: 'Access denied. Organization suspended.' });
+    }
+
     // Generate new access token
     const newAccessToken = jwt.sign(
-      { userId: decoded.userId, role: decoded.role, orgId: decoded.orgId },
+      { userId: user._id, role: user.role, orgId: user.organizationId?._id },
       process.env.JWT_SECRET,
       { expiresIn: '15m' }
     );
+
 
     res.cookie('accessToken', newAccessToken, {
       httpOnly: true,

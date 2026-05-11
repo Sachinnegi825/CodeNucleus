@@ -8,6 +8,11 @@ const organizationSchema = new mongoose.Schema({
     primaryColor: { type: String, default: '#2563eb' },
     fontFamily: { type: String, default: 'Inter' },
     accuracyThreshold: { type: Number, default: 0.85 },
+  },
+  status: {
+    type: String,
+    enum: ['active', 'inactive', 'suspended'],
+    default: 'active',
   }
 }, { timestamps: true });
 
