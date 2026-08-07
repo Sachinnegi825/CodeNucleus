@@ -7,6 +7,8 @@ import Login from './pages/Login';
 import SuperAdminLayout from './components/SuperAdminLayout';
 import SuperAdminOverview from './pages/SuperAdminOverview';
 import SuperAdminOrganizations from './pages/SuperAdminOrganizations';
+import SuperAdminCoders from './pages/SuperAdminCoders';
+import SuperAdminApiMetrics from './pages/SuperAdminApiMetrics';
 import CoderWorkspace from './pages/CoderWorkspace';
 
 // New Admin Layout & Sub-Pages
@@ -60,6 +62,8 @@ export default function App() {
               <Route element={<SuperAdminLayout />}>
                 <Route path="/superadmin/dashboard" element={<SuperAdminOverview />} />
                 <Route path="/superadmin/organizations" element={<SuperAdminOrganizations />} />
+                <Route path="/superadmin/coders" element={<SuperAdminCoders />} />
+                <Route path="/superadmin/api-metrics" element={<SuperAdminApiMetrics />} />
                 <Route path="/superadmin" element={<Navigate to="/superadmin/dashboard" replace />} />
               </Route>
             </Route>

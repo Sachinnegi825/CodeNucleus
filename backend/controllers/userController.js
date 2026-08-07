@@ -2,6 +2,7 @@ import bcrypt from 'bcrypt';
 import User from '../models/User.js';
 import Organization from '../models/Organization.js';
 import AuditLog from '../models/AuditLog.js';
+import Encounter from '../models/Encounter.js';
 
 // 🔴 SUPER ADMIN: Create Organization + Admin (The Boss)
 export const createAgency = async (req, res) => {
@@ -76,6 +77,33 @@ export const getCoders = async (req, res) => {
   }
 };
 
+export const getGlobalCoders = async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+
+    const query = { role: 'coder' };
+    const totalCoders = await User.countDocuments(query);
+
+    const coders = await User.find(query)
+      .populate('organizationId', 'name subdomain')
+      .select('-password')
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit);
+
+    res.json({
+      coders,
+      currentPage: page,
+      totalPages: Math.ceil(totalCoders / limit),
+      totalCoders
+    });
+  } catch (error) {
+    res.status(500).json({ error: "Failed to fetch global coders" });
+  }
+};
+
 export const getAgencies = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
@@ -92,11 +120,14 @@ export const getAgencies = async (req, res) => {
       .skip(skip)
       .limit(limit);
 
+    const totalEncounters = await Encounter.countDocuments();
+
     res.json({
       agencies,
       currentPage: page,
       totalPages: Math.ceil(totalAgencies / limit),
-      totalAgencies
+      totalAgencies,
+      totalEncounters
     });
   } catch (error) {
     res.status(500).json({ error: "Failed to fetch agencies" });

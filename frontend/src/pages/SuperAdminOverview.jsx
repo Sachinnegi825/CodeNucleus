@@ -10,10 +10,10 @@ import {
   PlusCircle,
   Building2,
   Cloud,
-  Activity
+  Activity,
+  FileText
 } from 'lucide-react';
-import toast from 'react-hot-toast';
-// Components
+
 import StatsCard from '../components/ui/StatsCard';
 import CreateAgencyModal from '../components/modals/CreateAgencyModal';
 
@@ -22,6 +22,7 @@ export default function SuperAdminOverview() {
   const [stats, setStats] = useState({
     totalAgencies: 0,
     activeInstances: 0,
+    totalEncounters: 0,
   });
 
   const fetchStats = async () => {
@@ -29,7 +30,8 @@ export default function SuperAdminOverview() {
       const data = await userService.getAgencies(1, 1);
       setStats({
         totalAgencies: data?.totalAgencies || 0,
-        activeInstances: data?.totalAgencies || 0 
+        activeInstances: data?.totalAgencies || 0,
+        totalEncounters: data?.totalEncounters || 0
       });
     } catch (err) {
       console.error("Failed to fetch dashboard stats", err);
@@ -70,7 +72,7 @@ export default function SuperAdminOverview() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         <StatsCard label="Managed Agencies" value={stats.totalAgencies} icon={Building2} color="text-blue-500" />
         <StatsCard label="Cloud Instances" value={stats.activeInstances} icon={Cloud} color="text-emerald-500" />
-        <StatsCard label="Neural Load" value="4.2%" icon={Cpu} color="text-amber-500" />
+        <StatsCard label="Global Encounters" value={stats.totalEncounters} icon={FileText} color="text-amber-500" />
         <StatsCard label="Edge Status" value="Online" icon={Activity} color="text-red-500" />
       </div>
 

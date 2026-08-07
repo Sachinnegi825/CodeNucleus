@@ -5,6 +5,11 @@ getCoders: async (page = 1, limit = 10) => {
   const res = await api.get(`/users/coders?page=${page}&limit=${limit}`);
   return res.data;
 },
+
+getGlobalCoders: async (page = 1, limit = 10) => {
+  const res = await api.get(`/users/global-coders?page=${page}&limit=${limit}`);
+  return res.data;
+},
   
   createCoder: async (email, password) => {
     const res = await api.post('/users/coder', { email, password });

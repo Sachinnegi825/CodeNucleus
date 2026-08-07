@@ -9,6 +9,8 @@ import {
   ShieldAlert,
   PanelLeftClose,
   PanelLeftOpen,
+  Users,
+  BrainCircuit
 } from 'lucide-react';
 
 export default function SuperAdminLayout() {
@@ -19,6 +21,8 @@ export default function SuperAdminLayout() {
   const menuItems = [
     { name: 'Main Dashboard', path: '/superadmin/dashboard', icon: LayoutDashboard },
     { name: 'Manage Organizations', path: '/superadmin/organizations', icon: Building2 },
+    { name: 'Global Coders', path: '/superadmin/coders', icon: Users },
+    { name: 'API Accuracy', path: '/superadmin/api-metrics', icon: BrainCircuit },
   ];
 
   const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
